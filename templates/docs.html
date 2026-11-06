@@ -1,0 +1,189 @@
+{% extends "base.html" %}
+
+{% block title %}Hackathon Documentation - {{ project_name }}{% endblock %}
+
+{% block content %}
+<div style="max-width: 1000px; margin: 0 auto;">
+
+  <!-- Document Header -->
+  <div class="card" style="border-top: 4px solid var(--purple-accent); text-align:center; padding:32px 24px;">
+    <span class="badge badge-medium" style="margin-bottom:12px; font-size:0.8rem; padding:6px 14px;">
+      PROJECT CODE: {{ project_code }} &bull; HACKATHON DOCUMENTATION
+    </span>
+    <h1 style="font-size:2.2rem; font-weight:800; color:#fff; margin-bottom:8px;">
+      DISASTERSYNC AI
+    </h1>
+    <h2 style="font-size:1.1rem; font-weight:500; color:var(--text-muted); max-width:700px; margin:0 auto 20px;">
+      AI-Powered Multi-Agent Disaster Response and Emergency Coordination System
+    </h2>
+
+    <div style="display:flex; justify-content:center; gap:20px; flex-wrap:wrap; font-size:0.85rem; color:#cbd5e1; border-top:1px solid var(--border-color); padding-top:16px;">
+      <div><strong>Team:</strong> {{ team_name }} ({{ team_members | join(', ') }})</div>
+      <div><strong>Institution:</strong> {{ college }}</div>
+      <div><strong>Mentor:</strong> {{ mentor }}</div>
+      <div><strong>Event:</strong> 24Hrs Hackathon on Generative AI ({{ event_date }})</div>
+    </div>
+  </div>
+
+  <!-- Document Sections -->
+  <div class="card">
+    <h2 style="color:#60a5fa; font-size:1.4rem; margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+      <i class="fa-solid fa-file-lines"></i> Abstract & Executive Summary
+    </h2>
+    <p style="color:#cbd5e1; line-height:1.7; margin-bottom:12px;">
+      <strong>DisasterSync AI</strong> represents an Agentic AI platform designed to maximize efficiency and situational awareness when responding to large-scale disasters (floods, fires, earthquakes, and mass accidents). The technology gathers reports from citizens and emergency channels, normalizes them, verifies spatial coordinates, clusters duplicate calls, and coordinates specialized AI agents (Coordinator, Police, Fire & Rescue, Medical, and Resource Management). An AI coordinator synthesizes structured action recommendations, but final consequential decisions remain strictly in human hands (Human-in-the-Loop).
+    </p>
+  </div>
+
+  <div class="card">
+    <h2 style="color:#60a5fa; font-size:1.4rem; margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+      <i class="fa-solid fa-robot"></i> Multi-Agent Architecture (Section 7)
+    </h2>
+    
+    <div class="table-responsive">
+      <table class="custom-table">
+        <thead>
+          <tr>
+            <th>Agent Name</th>
+            <th>Core Responsibility</th>
+            <th>Example Structured Output</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong style="color:#8b5cf6;">Coordinator Agent</strong></td>
+            <td>Assigns tasks, combines agent responses, calculates urgency scores (0-100), detects duplicates.</td>
+            <td>Synthesized action plan, priority rating, and task owners.</td>
+          </tr>
+          <tr>
+            <td><strong style="color:#3b82f6;">Police Coordination Agent</strong></td>
+            <td>Public safety, traffic divergence, crowd control, 500m perimeter cordon, evacuation corridors.</td>
+            <td>Police tactical checklist, road blockage guidance.</td>
+          </tr>
+          <tr>
+            <td><strong style="color:#a855f7;">Monitoring & Duplicate Agent</strong></td>
+            <td>Calculates Haversine spatial distance (&lt;2km) and text similarity to flag duplicate reports.</td>
+            <td>Duplicate cluster alert with parent incident ID and confidence %.</td>
+          </tr>
+          <tr>
+            <td><strong style="color:#ef4444;">Fire & Rescue Agent</strong></td>
+            <td>Fire containment, water level analysis, flood watercraft, hydraulic cutters, building collapse.</td>
+            <td>Specialized equipment checklist (boats, ladders, cutters).</td>
+          </tr>
+          <tr>
+            <td><strong style="color:#10b981;">Medical Assistance Agent</strong></td>
+            <td>Casualty triage classification (Red/Yellow/Green), ambulance demand, hospital ICU bed status.</td>
+            <td>Mass casualty triage alert and trauma bed reservations.</td>
+          </tr>
+          <tr>
+            <td><strong style="color:#f59e0b;">Resource Management Agent</strong></td>
+            <td>Tracks availability of vehicles, boats, beds, teams; calculates proximity and shortages.</td>
+            <td>Asset allocation recommendation &amp; shortage alerts.</td>
+          </tr>
+          <tr>
+            <td><strong style="color:#38bdf8;">Communication Agent</strong></td>
+            <td>Formulates simulated CAD dispatches, digital pagers, radio transmissions, and public bulletins.</td>
+            <td>Standardized CAD dispatch payload and public safety warning.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 style="color:#60a5fa; font-size:1.4rem; margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+      <i class="fa-solid fa-list-check"></i> Operational Workflow & Safety Boundaries
+    </h2>
+    <ol style="padding-left:24px; color:#cbd5e1; line-height:1.8;">
+      <li><strong>Receive:</strong> A citizen submits an incident report or clicks the 1-Click Urgent SOS Panic Button.</li>
+      <li><strong>Validate:</strong> System validates required fields, timestamp, source, GPS location, and runs Haversine spatial duplicate checks.</li>
+      <li><strong>Assess:</strong> Transparent urgency calculation factors in threat to life (+40 SOS, +30 trapped, +25 casualties, hazard type).</li>
+      <li><strong>Coordinate:</strong> Specialized AI agents analyze public safety, fire containment, casualty triage, and asset allocation.</li>
+      <li><strong>Review (Human-in-the-Loop):</strong> Human incident commanders review evidence, certainty levels, and suggested dispatches.</li>
+      <li><strong>Dispatch &amp; Update:</strong> Simulated alerts are authorized; field officers update status (`Reported`, `Verified`, `Dispatched`, `In Progress`, `Resolved`, `Closed`).</li>
+      <li><strong>Audit:</strong> All submissions, AI triage events, and officer approvals are permanently logged in the audit trail.</li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <h2 style="color:#60a5fa; font-size:1.4rem; margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+      <i class="fa-solid fa-vial-circle-check"></i> Hackathon Test Suite Verification Matrix (Section 14)
+    </h2>
+
+    <div class="table-responsive">
+      <table class="custom-table">
+        <thead>
+          <tr>
+            <th>Test ID</th>
+            <th>Test Objective</th>
+            <th>Expected Result</th>
+            <th>Verification Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>T-01</strong></td>
+            <td>Submit complete incident report</td>
+            <td>Incident saved with source, GPS coords, and timestamp</td>
+            <td><span class="badge badge-low"><i class="fa-solid fa-check"></i> PASS</span></td>
+          </tr>
+          <tr>
+            <td><strong>T-02</strong></td>
+            <td>Submit report missing location</td>
+            <td>System requests correction or marks location unknown</td>
+            <td><span class="badge badge-low"><i class="fa-solid fa-check"></i> PASS</span></td>
+          </tr>
+          <tr>
+            <td><strong>T-03</strong></td>
+            <td>Submit two similar reports within 2km</td>
+            <td>Possible duplicate flagged for review &amp; linked to parent</td>
+            <td><span class="badge badge-low"><i class="fa-solid fa-check"></i> PASS</span></td>
+          </tr>
+          <tr>
+            <td><strong>T-04</strong></td>
+            <td>Provide urgent SOS trigger</td>
+            <td>Assigned 100/100 score with CRITICAL urgency</td>
+            <td><span class="badge badge-low"><i class="fa-solid fa-check"></i> PASS</span></td>
+          </tr>
+          <tr>
+            <td><strong>T-05</strong></td>
+            <td>Multi-agent coordination output</td>
+            <td>Structured summaries include evidence, confidence &amp; actions</td>
+            <td><span class="badge badge-low"><i class="fa-solid fa-check"></i> PASS</span></td>
+          </tr>
+          <tr>
+            <td><strong>T-06</strong></td>
+            <td>Human Officer approval requirement</td>
+            <td>Consequential dispatch requires officer action</td>
+            <td><span class="badge badge-low"><i class="fa-solid fa-check"></i> PASS</span></td>
+          </tr>
+          <tr>
+            <td><strong>T-07</strong></td>
+            <td>Resource proximity matching</td>
+            <td>Nearest available vehicles/boats recommended</td>
+            <td><span class="badge badge-low"><i class="fa-solid fa-check"></i> PASS</span></td>
+          </tr>
+          <tr>
+            <td><strong>T-08</strong></td>
+            <td>Audit log persistence</td>
+            <td>All actions, timestamps, and actors recorded in audit trail</td>
+            <td><span class="badge badge-low"><i class="fa-solid fa-check"></i> PASS</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card" style="background:rgba(239,68,68,0.06); border:1px solid rgba(239,68,68,0.3);">
+    <h3 style="color:#f87171; font-size:1.15rem; margin-bottom:8px;">
+      <i class="fa-solid fa-shield-halved"></i> Hackathon Safety & Ethics Compliance
+    </h3>
+    <p style="font-size:0.85rem; color:#cbd5e1; line-height:1.6;">
+      This project is developed strictly as a technology prototype for the <strong>24Hrs Hackathon on Generative AI</strong>. 
+      All emergency alerts, dispatch messages, and resource allocations are entirely simulated. The prototype does not contact real emergency services (911/112/100) or dispatch real response personnel.
+    </p>
+  </div>
+
+</div>
+{% endblock %}
+

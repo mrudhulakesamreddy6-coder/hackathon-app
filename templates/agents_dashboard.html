@@ -1,0 +1,318 @@
+{% extends "base.html" %}
+
+{% block title %}Autonomous Multi-Agent Control Center - {{ project_name }}{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 24px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+  <div>
+    <div style="display:flex; align-items:center; gap:10px;">
+      <h1 style="font-size: 1.8rem; font-weight: 800; color: #fff; margin:0; display:flex; align-items:center; gap:12px;">
+        <i class="fa-solid fa-robot" style="color:#8b5cf6;"></i> Autonomous Multi-Agent Command Center
+      </h1>
+      <span class="badge" id="system-overall-badge" style="background:rgba(16,185,129,0.2); color:#34d399; font-size:0.8rem; border:1px solid rgba(16,185,129,0.4);">
+        <i class="fa-solid fa-circle-check"></i> ALL SYSTEMS OPERATIONAL
+      </span>
+    </div>
+    <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 6px;">
+      10 autonomous AI agents collaborating via real-time message bus with failure recovery and human-in-the-loop safety.
+    </p>
+  </div>
+
+  <!-- Command Actions -->
+  <div style="display:flex; gap:10px; flex-wrap:wrap;">
+    <button class="btn btn-secondary btn-sm" id="btn-agent-ping" onclick="pingAllAgents()" style="border-color:#06b6d4; color:#22d3ee;">
+      <i class="fa-solid fa-heart-pulse"></i> Health Ping
+    </button>
+    <button class="btn btn-secondary btn-sm" id="btn-agent-maint" onclick="runMaintenanceScan()" style="border-color:#ec4899; color:#f472b6;">
+      <i class="fa-solid fa-wrench"></i> Self-Healing Scan
+    </button>
+    <button class="btn btn-secondary btn-sm" onclick="refreshAgentTelemetry()">
+      <i class="fa-solid fa-rotate"></i> Refresh Telemetry
+    </button>
+    <a href="{{ url_for('dashboard_page') }}" class="btn btn-primary btn-sm">
+      <i class="fa-solid fa-headset"></i> Incident Command
+    </a>
+  </div>
+</div>
+
+<!-- Telemetry Stats Strip -->
+<div class="grid-4" style="margin-bottom: 24px;">
+  <div class="stat-card" style="border-color:rgba(139,92,246,0.3);">
+    <div class="stat-icon" style="background:rgba(139,92,246,0.15); color:#a78bfa;">
+      <i class="fa-solid fa-network-wired"></i>
+    </div>
+    <div>
+      <div class="stat-value" id="stat-active-agents" style="color:#a78bfa;">10 / 10</div>
+      <div class="stat-label">Active AI Agents</div>
+    </div>
+  </div>
+
+  <div class="stat-card" style="border-color:rgba(6,182,212,0.3);">
+    <div class="stat-icon" style="background:rgba(6,182,212,0.15); color:#22d3ee;">
+      <i class="fa-solid fa-clock"></i>
+    </div>
+    <div>
+      <div class="stat-value" id="stat-server-uptime" style="color:#22d3ee;">--</div>
+      <div class="stat-label">System Uptime</div>
+    </div>
+  </div>
+
+  <div class="stat-card" style="border-color:rgba(16,185,129,0.3);">
+    <div class="stat-icon" style="background:rgba(16,185,129,0.15); color:#34d399;">
+      <i class="fa-solid fa-envelope-circle-check"></i>
+    </div>
+    <div>
+      <div class="stat-value" id="stat-bus-messages" style="color:#34d399;">--</div>
+      <div class="stat-label">Inter-Agent Messages</div>
+    </div>
+  </div>
+
+  <div class="stat-card" style="border-color:rgba(234,179,8,0.3);">
+    <div class="stat-icon" style="background:rgba(234,179,8,0.15); color:#facc15;">
+      <i class="fa-solid fa-database"></i>
+    </div>
+    <div>
+      <div class="stat-value" id="stat-db-mode" style="color:#facc15;">{{ active_db }}</div>
+      <div class="stat-label">Storage Engine</div>
+    </div>
+  </div>
+</div>
+
+<!-- Safety Protocol Banner (Req Safety) -->
+<div style="background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.3); border-left:4px solid #ef4444; border-radius:8px; padding:12px 16px; margin-bottom:24px; display:flex; align-items:flex-start; gap:12px;">
+  <i class="fa-solid fa-shield-halved" style="color:#f87171; font-size:1.2rem; margin-top:2px;"></i>
+  <div style="font-size:0.83rem; line-height:1.5; color:#fca5a5;">
+    <strong>AUTONOMOUS SAFETY GUARDRAIL ACTIVE:</strong> AI agents perform real-time triage, duplicate detection, and resource calculations autonomously. However, per Life-Critical Safety Policy, <strong>actual emergency resource dispatch requires authorized human officer confirmation</strong>. No automated agent can dispatch live emergency vehicles without commander authorization.
+  </div>
+</div>
+
+<!-- 10 AI Agents Grid -->
+<div style="margin-bottom: 24px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+    <h3 style="color:#fff; font-size:1.15rem; margin:0; display:flex; align-items:center; gap:8px;">
+      <i class="fa-solid fa-microchip" style="color:#8b5cf6;"></i> Specialized Autonomous Agents Registry
+    </h3>
+    <span style="font-size:0.78rem; color:var(--text-dim);">Real-Time Execution &amp; Health State</span>
+  </div>
+
+  <div id="agents-grid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:14px;">
+    <!-- Rendered dynamically -->
+    <div style="grid-column: 1/-1; text-align:center; padding:30px; color:var(--text-dim);">
+      <i class="fa-solid fa-spinner fa-spin" style="font-size:1.5rem;"></i>
+      <p style="margin-top:8px;">Loading multi-agent telemetry...</p>
+    </div>
+  </div>
+</div>
+
+<!-- Bottom Section: Inter-Agent Message Bus & Diagnostics -->
+<div class="grid-2" style="grid-template-columns: 1.4fr 1fr; margin-bottom:24px;">
+  
+  <!-- Live Inter-Agent Message Bus Feed -->
+  <div class="card" style="margin-bottom:0;">
+    <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+      <h3 class="card-title">
+        <i class="fa-solid fa-comments" style="color:#38bdf8;"></i> Inter-Agent Message Bus (Live Stream)
+      </h3>
+      <span class="badge" style="background:rgba(56,189,248,0.2); color:#38bdf8; font-size:0.7rem;">
+        <i class="fa-solid fa-tower-cell"></i> Event Bus Active
+      </span>
+    </div>
+    <div id="message-bus-feed" style="max-height:360px; overflow-y:auto; display:flex; flex-direction:column; gap:8px; padding-right:4px;">
+      <div style="text-align:center; padding:30px; color:var(--text-dim);">Loading inter-agent communications...</div>
+    </div>
+  </div>
+
+  <!-- Self-Healing Maintenance & Diagnostics Log -->
+  <div class="card" style="margin-bottom:0;">
+    <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+      <h3 class="card-title">
+        <i class="fa-solid fa-wrench" style="color:#ec4899;"></i> Self-Healing Diagnostics
+      </h3>
+      <button class="btn btn-secondary btn-sm" onclick="runMaintenanceScan()" style="font-size:0.75rem; padding:3px 8px;">
+        <i class="fa-solid fa-play"></i> Run Diagnostics
+      </button>
+    </div>
+    <div id="diagnostic-results" style="font-size:0.82rem;">
+      <div style="background:rgba(15,23,42,0.6); padding:12px; border-radius:6px; margin-bottom:8px;">
+        <div style="font-weight:600; color:#fff; margin-bottom:4px;"><i class="fa-solid fa-stethoscope" style="color:#22d3ee;"></i> Automated Maintenance Probe</div>
+        <div style="color:var(--text-dim); font-size:0.78rem;">Verifies database read/write integrity, upload storage permissions, Gmail SMTP gateway, and Gemini LLM connectivity.</div>
+      </div>
+      <div id="diagnostic-checks-list" style="display:flex; flex-direction:column; gap:6px;">
+        <!-- Filled by JS -->
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+async function refreshAgentTelemetry() {
+  try {
+    const res = await fetch('/api/system/agents');
+    const data = await res.json();
+    if (!data.success) return;
+
+    document.getElementById('stat-active-agents').textContent = `${data.healthy_count} / ${data.total_agents}`;
+    document.getElementById('stat-server-uptime').textContent = data.server_uptime || 'Live';
+    document.getElementById('stat-db-mode').textContent = data.db_mode || 'SQLite';
+
+    const grid = document.getElementById('agents-grid');
+    grid.innerHTML = data.agents.map(a => {
+      let statusClass = 'background:rgba(16,185,129,0.2); color:#34d399; border:1px solid rgba(16,185,129,0.4);';
+      if (a.status === 'ACTIVE') statusClass = 'background:rgba(59,130,246,0.2); color:#60a5fa; border:1px solid rgba(59,130,246,0.4);';
+      else if (a.status === 'DEGRADED') statusClass = 'background:rgba(245,158,11,0.2); color:#fbbf24; border:1px solid rgba(245,158,11,0.4);';
+      else if (a.status === 'FAILED') statusClass = 'background:rgba(239,68,68,0.2); color:#f87171; border:1px solid rgba(239,68,68,0.4);';
+
+      return `
+        <div style="background:rgba(15,23,42,0.85); border:1px solid rgba(255,255,255,0.08); border-top:3px solid ${a.color}; border-radius:8px; padding:14px; display:flex; flex-direction:column; justify-content:space-between;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <div style="width:32px; height:32px; border-radius:6px; background:${a.color}22; display:flex; align-items:center; justify-content:center; color:${a.color}; font-size:1rem;">
+                  <i class="fa-solid ${a.icon}"></i>
+                </div>
+                <div>
+                  <div style="font-weight:700; color:#fff; font-size:0.9rem;">${a.agent_name}</div>
+                  <div style="font-size:0.7rem; color:${a.color}; font-weight:600;">${a.role}</div>
+                </div>
+              </div>
+              <span class="badge" style="${statusClass}; font-size:0.65rem;">${a.status}</span>
+            </div>
+
+            <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:10px; line-height:1.4;">
+              ${a.description}
+            </div>
+
+            <!-- Current Task -->
+            <div style="background:rgba(0,0,0,0.3); padding:8px 10px; border-radius:6px; margin-bottom:10px; border-left:2px solid ${a.color};">
+              <div style="font-size:0.68rem; color:var(--text-dim); text-transform:uppercase; font-weight:bold;">Assigned Task:</div>
+              <div style="font-size:0.76rem; color:#e2e8f0; font-family:monospace; margin-top:2px; word-break:break-word;">
+                ${a.current_task || 'Awaiting dispatch events'}
+              </div>
+            </div>
+          </div>
+
+          <div style="border-top:1px solid rgba(255,255,255,0.06); padding-top:8px; display:flex; justify-content:space-between; align-items:center; font-size:0.7rem; color:var(--text-dim);">
+            <span><i class="fa-solid fa-list-check"></i> Tasks: <strong>${a.tasks_processed}</strong></span>
+            <span><i class="fa-solid fa-heart"></i> Health: <strong>${Math.round(a.health_score * 100)}%</strong></span>
+            <span><i class="fa-solid fa-clock"></i> ${a.last_activity ? a.last_activity.split(' ')[1] : ''}</span>
+          </div>
+        </div>`;
+    }).join('');
+  } catch (e) {
+    console.error("Telemetry error", e);
+  }
+}
+
+async function refreshMessageBusFeed() {
+  try {
+    const res = await fetch('/api/system/messages');
+    const data = await res.json();
+    if (!data.success) return;
+
+    document.getElementById('stat-bus-messages').textContent = data.messages ? data.messages.length : 0;
+    const feed = document.getElementById('message-bus-feed');
+    if (!data.messages || data.messages.length === 0) {
+      feed.innerHTML = `<div style="text-align:center; padding:24px; color:var(--text-dim);">No inter-agent messages recorded yet. Submit a report to see messages exchange in real time.</div>`;
+      return;
+    }
+
+    feed.innerHTML = data.messages.map(m => `
+      <div style="background:rgba(15,23,42,0.7); border:1px solid var(--border-color); border-radius:6px; padding:10px 12px; font-size:0.78rem;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+          <div style="display:flex; align-items:center; gap:6px; font-weight:700;">
+            <span style="color:#c084fc;">${m.sender_agent}</span>
+            <span style="color:var(--text-dim);">&rarr;</span>
+            <span style="color:#67e8f9;">${m.receiver_agent}</span>
+          </div>
+          <span style="font-family:monospace; color:var(--text-dim); font-size:0.7rem;">${m.timestamp}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+          <div style="color:#cbd5e1; font-size:0.75rem;">${m.content}</div>
+          <span class="badge" style="font-size:0.65rem; background:rgba(56,189,248,0.15); color:#38bdf8; font-family:monospace; white-space:nowrap;">
+            ${m.message_type}
+          </span>
+        </div>
+      </div>
+    `).join('');
+  } catch (e) {
+    console.error("Message bus feed error", e);
+  }
+}
+
+async function pingAllAgents() {
+  const btn = document.getElementById('btn-agent-ping');
+  btn.disabled = true;
+  btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Pinging...`;
+
+  try {
+    const res = await fetch('/api/system/ping', { method: 'POST' });
+    const data = await res.json();
+    if (window.DisasterSync && window.DisasterSync.showToast) {
+      window.DisasterSync.showToast(`Pinged 10 agents: ${data.status} (DB Latency: ${data.db_latency_ms}ms)`, 'success');
+    }
+    await refreshAgentTelemetry();
+    await refreshMessageBusFeed();
+  } catch (e) {
+    if (window.DisasterSync && window.DisasterSync.showToast) {
+      window.DisasterSync.showToast('Ping failed: ' + e.message, 'danger');
+    }
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<i class="fa-solid fa-heart-pulse"></i> Health Ping`;
+  }
+}
+
+async function runMaintenanceScan() {
+  const btn = document.getElementById('btn-agent-maint');
+  btn.disabled = true;
+  btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Scanning...`;
+
+  try {
+    const res = await fetch('/api/system/maintenance', { method: 'POST' });
+    const data = await res.json();
+    if (window.DisasterSync && window.DisasterSync.showToast) {
+      window.DisasterSync.showToast(`Maintenance complete: ${data.checks.length} checks performed (${data.diagnostic_time_ms}ms)`, 'success');
+    }
+
+    const checksContainer = document.getElementById('diagnostic-checks-list');
+    checksContainer.innerHTML = data.checks.map(c => `
+      <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.3); padding:8px 10px; border-radius:4px;">
+        <div>
+          <strong style="color:#fff;">${c.check}</strong>
+          <div style="font-size:0.72rem; color:var(--text-dim);">${c.details}</div>
+        </div>
+        <span class="badge" style="font-size:0.68rem; ${c.status.includes('PASS') || c.status === 'CONFIGURED' || c.status === 'ACTIVE' ? 'background:rgba(16,185,129,0.2); color:#34d399;' : 'background:rgba(234,179,8,0.2); color:#facc15;'}">
+          ${c.status}
+        </span>
+      </div>
+    `).join('');
+
+    await refreshAgentTelemetry();
+    await refreshMessageBusFeed();
+  } catch (e) {
+    if (window.DisasterSync && window.DisasterSync.showToast) {
+      window.DisasterSync.showToast('Maintenance scan failed: ' + e.message, 'danger');
+    }
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<i class="fa-solid fa-wrench"></i> Self-Healing Scan`;
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  refreshAgentTelemetry();
+  refreshMessageBusFeed();
+  runMaintenanceScan();
+
+  // Auto-refresh every 12 seconds for live telemetry
+  setInterval(() => {
+    refreshAgentTelemetry();
+    refreshMessageBusFeed();
+  }, 12000);
+});
+</script>
+{% endblock %}
+

@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" width="100%" height="100%">
+  <defs>
+    <linearGradient id="nightSky" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#020617"/>
+      <stop offset="60%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#1e1b4b"/>
+    </linearGradient>
+    <radialGradient id="fireGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="30%" stop-color="#f97316"/>
+      <stop offset="70%" stop-color="#ef4444"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Night Sky with Smoke Glow -->
+  <rect width="800" height="500" fill="url(#nightSky)"/>
+  
+  <!-- Thick billowing smoke -->
+  <circle cx="360" cy="180" r="110" fill="#334155" opacity="0.8"/>
+  <circle cx="440" cy="140" r="130" fill="#1e293b" opacity="0.85"/>
+  <circle cx="310" cy="110" r="90" fill="#475569" opacity="0.75"/>
+  <circle cx="490" cy="90" r="100" fill="#0f172a" opacity="0.9"/>
+
+  <!-- Building Structure -->
+  <rect x="220" y="200" width="360" height="230" fill="#1e293b" stroke="#334155" stroke-width="2"/>
+  
+  <!-- Windows with fire inside -->
+  <rect x="260" y="240" width="50" height="60" fill="#f97316" rx="4"/>
+  <rect x="340" y="240" width="50" height="60" fill="#ea580c" rx="4"/>
+  <rect x="420" y="240" width="50" height="60" fill="#ef4444" rx="4"/>
+  <rect x="500" y="240" width="50" height="60" fill="#fbbf24" rx="4"/>
+
+  <!-- Lower level windows -->
+  <rect x="260" y="330" width="50" height="70" fill="#b91c1c" rx="4"/>
+  <rect x="420" y="330" width="50" height="70" fill="#f97316" rx="4"/>
+  <rect x="500" y="330" width="50" height="70" fill="#ea580c" rx="4"/>
+
+  <!-- Active Fire Blaze -->
+  <circle cx="380" cy="220" r="140" fill="url(#fireGlow)" opacity="0.85"/>
+  
+  <!-- Flame tongues -->
+  <path d="M 320 280 Q 300 170 340 140 Q 380 200 400 130 Q 430 180 460 120 Q 480 210 500 280 Z" fill="#ef4444"/>
+  <path d="M 340 280 Q 330 190 360 160 Q 390 220 410 150 Q 440 200 470 280 Z" fill="#f97316"/>
+  <path d="M 360 280 Q 380 200 400 170 Q 420 220 440 280 Z" fill="#fde047"/>
+
+  <!-- Electrical Sparks / Transformer -->
+  <rect x="120" y="320" width="45" height="70" fill="#475569"/>
+  <line x1="142" y1="200" x2="142" y2="320" stroke="#94a3b8" stroke-width="6"/>
+  <circle cx="142" cy="290" r="16" fill="#38bdf8" opacity="0.8"/>
+  <path d="M 130 290 L 145 280 L 140 295 L 155 285" stroke="#fef08a" stroke-width="3" fill="none"/>
+
+  <!-- Ground -->
+  <rect x="0" y="420" width="800" height="80" fill="#0f172a"/>
+
+  <!-- LIVE GEOTAG WATERMARK OVERLAY -->
+  <rect x="20" y="405" width="760" height="75" rx="8" fill="rgba(15, 23, 42, 0.9)" stroke="#ef4444" stroke-width="1.5"/>
+  <circle cx="50" cy="442" r="14" fill="#dc2626"/>
+  <text x="50" y="447" fill="#fff" font-family="sans-serif" font-size="13" font-weight="bold" text-anchor="middle">SOS</text>
+  
+  <text x="80" y="432" fill="#f87171" font-family="monospace" font-size="15" font-weight="bold">📍 GEOTAG: 15.9150° N, 80.4610° E &bull; ACCURACY: &plusmn;2m</text>
+  <text x="80" y="452" fill="#f1f5f9" font-family="sans-serif" font-size="12">LOCATION: Market Yard Road, Sector 2, Old Grain Market Complex, Bapatla</text>
+  <text x="80" y="468" fill="#94a3b8" font-family="sans-serif" font-size="11">TIMESTAMP: 2026-11-06 16:10:05 IST &bull; ELECTRICAL SHORT CIRCUIT / STRUCTURAL BLAZE</text>
+</svg>
+

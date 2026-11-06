@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}{{ project_name }} - {{ project_title }}{% endblock %}</title>
+  
+  <!-- FontAwesome 6 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+  <!-- Hackathon Verification & Safety Banner -->
+  <aside aria-label="Hackathon Mode Banner" class="hackathon-banner">
+    <div>
+      <i class="fa-solid fa-triangle-exclamation"></i>
+      <strong>HACKATHON DEMONSTRATION MODE</strong> &bull; Simulated alerts only &bull; Real 911/112 services are NOT contacted.
+    </div>
+    <div style="display:flex; gap:8px; align-items:center;">
+      <span class="badge-pill">{{ project_code }}</span>
+      <span class="badge-pill">{{ college }}</span>
+      <span class="badge-pill">DB: {{ active_db }}</span>
+    </div>
+  </aside>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <a href="{{ url_for('index') }}" class="brand-container">
+      <div class="brand-icon">
+        <i class="fa-solid fa-shield-virus"></i>
+      </div>
+      <div>
+        <div class="brand-title">DisasterSync AI</div>
+        <div class="brand-subtitle">Multi-Agent Emergency Response</div>
+      </div>
+    </a>
+
+    <button class="mobile-nav-toggle" id="mobile-toggle" aria-label="Toggle Navigation">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+
+    <ul class="nav-links" id="nav-menu">
+      <li class="nav-item">
+        <a href="{{ url_for('index') }}"><i class="fa-solid fa-house"></i> Home</a>
+      </li>
+      <li class="nav-item">
+        <a href="{{ url_for('report_page') }}"><i class="fa-solid fa-file-circle-plus"></i> Report Incident</a>
+      </li>
+      <li class="nav-item">
+        <a href="{{ url_for('dashboard_page') }}"><i class="fa-solid fa-chart-line"></i> Command Center</a>
+      </li>
+      <li class="nav-item">
+        <a href="{{ url_for('track_page') }}"><i class="fa-solid fa-location-crosshairs"></i> Track Incident</a>
+      </li>
+      <li class="nav-item">
+        <a href="{{ url_for('agents_dashboard_page') }}"><i class="fa-solid fa-robot"></i> AI Multi-Agent</a>
+      </li>
+      <li class="nav-item">
+        <a href="{{ url_for('resources_page') }}"><i class="fa-solid fa-truck-droplet"></i> Agency Resources</a>
+      </li>
+      <li class="nav-item">
+        <a href="{{ url_for('alerts_page') }}"><i class="fa-solid fa-tower-broadcast"></i> Simulated Alerts</a>
+      </li>
+      <li class="nav-item">
+        <a href="{{ url_for('docs_page') }}"><i class="fa-solid fa-book"></i> Documentation</a>
+      </li>
+      <li class="nav-item">
+        <a href="{{ url_for('report_page') }}#sos" class="nav-sos-btn"><i class="fa-solid fa-bell"></i> URGENT SOS</a>
+      </li>
+    </ul>
+  </nav>
+
+  <!-- Main Content Wrapper -->
+  <main class="main-wrapper">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Global Footer -->
+  <footer>
+    <div style="max-width: 1200px; margin: 0 auto; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px;">
+      <div style="text-align: left;">
+        <strong>{{ project_name }}</strong> &mdash; {{ project_title }} (Code: <code>{{ project_code }}</code>)
+        <div class="footer-credits">
+          Developed by: <strong>{{ team_members | join(', ') }}</strong> &bull; Team: {{ team_name }}
+        </div>
+      </div>
+      <div style="text-align: right;">
+        <div>{{ college }} &bull; Mentor: {{ mentor }}</div>
+        <div class="footer-credits">24Hrs Hackathon on Generative AI &bull; {{ event_date }}</div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Notification Toast Container -->
+  <div id="toast-container" style="position:fixed; bottom:20px; right:20px; z-index:9999; display:flex; flex-direction:column; gap:10px;"></div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Main Common App JS -->
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>
+

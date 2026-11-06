@@ -1,0 +1,920 @@
+{% extends "base.html" %}
+
+{% block title %}{{ incident.incident_code }} - Multi-Agent Coordination Analysis{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+  <a href="{{ url_for('dashboard_page') }}" class="btn btn-secondary btn-sm">
+    <i class="fa-solid fa-arrow-left"></i> Back to Command Center
+  </a>
+  <a href="{{ url_for('export_incident_report', incident_id=incident.id) }}" target="_blank" class="btn btn-secondary btn-sm" style="border-color: #3b82f6; color: #93c5fd;">
+    <i class="fa-solid fa-file-pdf"></i> Export After-Action Debrief (PDF / Print)
+  </a>
+</div>
+
+<!-- Incident Header Card -->
+<div class="card" style="border-top: 4px solid {% if incident.urgency_level == 'CRITICAL' %}#ef4444{% elif incident.urgency_level == 'HIGH' %}#f59e0b{% elif incident.urgency_level == 'MEDIUM' %}#3b82f6{% else %}#10b981{% endif %};">
+  
+  <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px;">
+    <div>
+      <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:8px;">
+        <h1 style="font-size:1.8rem; font-weight:800; color:#fff; font-family:monospace;">
+          {{ incident.incident_code }}
+        </h1>
+        <span class="badge badge-{{ incident.urgency_level.lower() }}" style="font-size:0.85rem; padding:4px 12px;">
+          {{ incident.urgency_level }} (Score: {{ incident.urgency_score }}/100)
+        </span>
+        {% if incident.is_sos %}
+          <span class="badge badge-sos" style="font-size:0.85rem; padding:4px 12px;">
+            <i class="fa-solid fa-triangle-exclamation"></i> CRITICAL SOS BEACON
+          </span>
+        {% endif %}
+        {% if incident.is_duplicate %}
+          <span class="badge badge-duplicate" style="font-size:0.85rem; padding:4px 12px;">
+            <i class="fa-solid fa-clone"></i> DUPLICATE CLUSTER
+          </span>
+        {% endif %}
+      </div>
+
+      <h2 style="font-size:1.25rem; font-weight:600; color:#e2e8f0; margin-bottom:10px;">
+        {{ incident.title }}
+      </h2>
+
+      <div style="font-size:0.9rem; color:var(--text-muted); display:flex; flex-wrap:wrap; gap:16px;">
+        <span><i class="fa-solid fa-location-dot" style="color:#ef4444;"></i> {{ incident.location_address }} {% if incident.landmark %}(Landmark: {{ incident.landmark }}){% endif %}</span>
+        <span><i class="fa-solid fa-clock"></i> Reported: {{ incident.reported_at }}</span>
+        <span><i class="fa-solid fa-user"></i> Source: {{ incident.source }} ({{ incident.reporter_name }})</span>
+      </div>
+    </div>
+
+    <!-- Officer Status Update Box -->
+    <div style="background:rgba(15,23,42,0.8); padding:16px; border-radius:var(--radius-md); border:1px solid var(--border-color); min-width:260px;">
+      <label class="form-label" style="font-size:0.8rem; color:var(--text-dim);">
+        <i class="fa-solid fa-user-shield"></i> Officer Status Control
+      </label>
+      <div style="display:flex; gap:8px;">
+        <select id="officer-status-select" class="form-control" style="font-weight:600;">
+          <option value="Reported" {% if incident.status == 'Reported' %}selected{% endif %}>Reported</option>
+          <option value="Verified" {% if incident.status == 'Verified' %}selected{% endif %}>Verified</option>
+          <option value="Dispatched" {% if incident.status == 'Dispatched' %}selected{% endif %}>Dispatched</option>
+          <option value="In Progress" {% if incident.status == 'In Progress' %}selected{% endif %}>In Progress</option>
+          <option value="Resolved" {% if incident.status == 'Resolved' %}selected{% endif %}>Resolved</option>
+          <option value="Closed" {% if incident.status == 'Closed' %}selected{% endif %}>Closed</option>
+        </select>
+        <button id="update-status-btn" class="btn btn-primary" data-incident-id="{{ incident.id }}">
+          Save
+        </button>
+      </div>
+      <div style="margin-top:8px;">
+        <button type="button" id="btn-operate-auto" class="btn btn-warning btn-sm" onclick="autoOperateIncident({{ incident.id }})" style="width:100%; font-size:0.8rem; box-shadow:0 0 12px rgba(245,158,11,0.4); font-weight:700;">
+          <i class="fa-solid fa-bolt"></i> Operate Agentic AI Automatically
+        </button>
+      </div>
+      <div style="font-size:0.75rem; color:var(--text-dim); margin-top:6px;">Current Status: <strong style="color:#60a5fa;" id="current-status-display">{{ incident.status }}</strong></div>
+    </div>
+  </div>
+
+  <!-- Agentic Autonomous Execution Trace Card -->
+  <div id="agentic-trace-card" class="card" style="display:none; border:2px solid #f59e0b; background:rgba(26,18,7,0.95); margin-top:16px;">
+    <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(245,158,11,0.3); padding-bottom:10px;">
+      <h3 class="card-title" style="color:#fbbf24; margin:0; display:flex; align-items:center; gap:8px;">
+        <i class="fa-solid fa-bolt"></i> Agentic AI Autonomous Operations Trace
+      </h3>
+      <span class="badge" style="background:rgba(245,158,11,0.2); color:#fbbf24;">
+        <i class="fa-solid fa-circle-check"></i> DISPATCHES TRANSMITTED
+      </span>
+    </div>
+    <div id="agentic-trace-steps" style="display:flex; flex-direction:column; gap:8px; margin-top:12px;"></div>
+  </div>
+
+  <!-- Description & Impact Numbers -->
+  <div style="margin-top:20px; padding-top:16px; border-top:1px solid var(--border-color);" class="grid-3">
+    <div style="grid-column: span 2;">
+      <div style="font-size:0.85rem; font-weight:700; color:var(--text-muted); margin-bottom:4px;">NARRATIVE SITUATION REPORT:</div>
+      <p style="color:#cbd5e1; font-size:0.95rem; line-height:1.6;">{{ incident.description }}</p>
+      
+      {% if incident.urgency_reasons %}
+      <div style="margin-top:12px; background:rgba(239,68,68,0.08); border-left:3px solid #ef4444; padding:8px 12px; border-radius:var(--radius-sm); font-size:0.85rem;">
+        <strong style="color:#f87171;">AI Urgency Calculation Breakdown:</strong>
+        <span style="color:#e2e8f0; margin-left:6px;">{{ incident.urgency_reasons }}</span>
+      </div>
+      {% endif %}
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:8px; justify-content:center; background:rgba(15,23,42,0.4); padding:12px; border-radius:var(--radius-sm);">
+      <div style="display:flex; justify-content:space-between; font-size:0.88rem;">
+        <span style="color:var(--text-muted);"><i class="fa-solid fa-users"></i> People Affected:</span>
+        <strong>{{ incident.people_affected }}</strong>
+      </div>
+      <div style="display:flex; justify-content:space-between; font-size:0.88rem;">
+        <span style="color:var(--text-muted);"><i class="fa-solid fa-person-shelter" style="color:#ef4444;"></i> Trapped Citizens:</span>
+        <strong style="color:{% if incident.trapped_count > 0 %}#f87171{% else %}inherit{% endif %};">{{ incident.trapped_count }}</strong>
+      </div>
+      <div style="display:flex; justify-content:space-between; font-size:0.88rem;">
+        <span style="color:var(--text-muted);"><i class="fa-solid fa-user-injured" style="color:#f59e0b;"></i> Injured / Casualties:</span>
+        <strong style="color:{% if incident.injured_count > 0 %}#fbbf24{% else %}inherit{% endif %};">{{ incident.injured_count }}</strong>
+      </div>
+      <div style="display:flex; justify-content:space-between; font-size:0.88rem;">
+        <span style="color:var(--text-muted);"><i class="fa-solid fa-location-crosshairs"></i> GPS Coordinates:</span>
+        <code>{{ incident.latitude }}, {{ incident.longitude }}</code>
+      </div>
+    </div>
+  </div>
+
+  <!-- Live Geotagged Disaster Scene Photo -->
+  <div style="margin-top:20px; padding-top:16px; border-top:1px solid var(--border-color);">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+      <div style="font-size:0.85rem; font-weight:700; color:var(--text-muted); display:flex; align-items:center; gap:8px;">
+        <i class="fa-solid fa-camera" style="color:#f59e0b;"></i> VERIFIED LIVE LOCATION GROUND PHOTO:
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button type="button" id="btn-open-incident-camera" class="btn btn-primary btn-sm" style="font-size:0.75rem;">
+          <i class="fa-solid fa-video"></i> Live Camera Capture
+        </button>
+        <a href="{{ incident.photo_url or '/static/images/flood_scene.svg' }}" target="_blank" class="btn btn-secondary btn-sm" style="font-size:0.75rem;">
+          <i class="fa-solid fa-up-right-from-square"></i> Open Fullscreen
+        </a>
+      </div>
+    </div>
+
+    <div style="position:relative; width:100%; border-radius:var(--radius-md); overflow:hidden; border:2px solid var(--border-color); box-shadow:var(--shadow-md); background:#0f172a;">
+      <img src="{{ incident.photo_url or '/static/images/flood_scene.svg' }}" alt="Verified Ground Emergency Photo" style="width:100%; max-height:420px; object-fit:cover; display:block;">
+      
+      <div style="position:absolute; bottom:12px; left:12px; right:12px; background:rgba(15,23,42,0.9); backdrop-filter:blur(6px); border:1px solid #38bdf8; border-radius:6px; padding:10px 14px; font-size:0.8rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+        <div>
+          <strong style="color:#38bdf8;">📍 LIVE GEOTAG: {{ incident.latitude }}° N, {{ incident.longitude }}° E</strong>
+          <div style="color:#f1f5f9; font-size:0.75rem; margin-top:2px;">{{ incident.location_address }} {% if incident.landmark %}(Landmark: {{ incident.landmark }}){% endif %}</div>
+        </div>
+        <div style="text-align:right;">
+          <span class="badge badge-low" style="background:rgba(16,185,129,0.25); color:#34d399;">
+            <i class="fa-solid fa-shield-check"></i> GEOTAG VERIFIED
+          </span>
+          <div style="font-size:0.7rem; color:#94a3b8; margin-top:2px;">Captured: {{ incident.reported_at }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Duplicate Alert Banner -->
+  {% if incident.is_duplicate and parent_incident %}
+  <div style="margin-top:18px; background:rgba(168,85,247,0.15); border:1px solid rgba(168,85,247,0.4); padding:14px; border-radius:var(--radius-md); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+    <div>
+      <strong style="color:#c084fc;"><i class="fa-solid fa-clone"></i> AI Duplicate Detection Match:</strong>
+      <span style="color:#e2e8f0; font-size:0.9rem; margin-left:6px;">
+        This incident was detected as a potential duplicate of primary incident 
+        <strong>{{ parent_incident.incident_code }}</strong> ({{ parent_incident.location_address }}).
+      </span>
+    </div>
+    <a href="{{ url_for('incident_detail_page', incident_id=parent_incident.id) }}" class="btn btn-secondary btn-sm" style="border-color:#c084fc; color:#c084fc;">
+      View Parent Incident <i class="fa-solid fa-arrow-right"></i>
+    </a>
+  </div>
+  {% endif %}
+
+  <!-- Child Duplicate Cluster -->
+  {% if child_duplicates %}
+  <div style="margin-top:18px; background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.3); padding:14px; border-radius:var(--radius-md);">
+    <strong style="color:#60a5fa;"><i class="fa-solid fa-layer-group"></i> Clustered Reports Linked to This Incident ({{ child_duplicates | length }}):</strong>
+    <ul style="margin-top:8px; padding-left:20px; font-size:0.88rem; color:#cbd5e1;">
+      {% for child in child_duplicates %}
+      <li>
+        <a href="{{ url_for('incident_detail_page', incident_id=child.id) }}" style="color:#93c5fd; text-decoration:none;">
+          <strong>{{ child.incident_code }}</strong>
+        </a> - Reported by {{ child.reporter_name }} at {{ child.reported_at }}: "{{ child.description[:80] }}..."
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+</div>
+
+<!-- Agent Execution Status Dashboard (Req 8, 9, 10, 19) -->
+<div class="card" id="agent-execution-panel">
+  <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+    <div>
+      <h3 class="card-title">
+        <i class="fa-solid fa-microchip" style="color:#8b5cf6;"></i> AI Agent Execution Dashboard
+      </h3>
+      <p style="font-size:0.78rem; color:var(--text-muted); margin-top:2px;">
+        Real-time status of all 5 AI agents. Each agent analyzes the incident independently.
+      </p>
+    </div>
+    <div style="display:flex; gap:8px; align-items:center;">
+      <span id="agent-status-summary" style="font-size:0.8rem; color:var(--text-dim);"></span>
+      <button id="btn-run-all-agents" class="btn btn-primary btn-sm" style="box-shadow: 0 0 12px rgba(139,92,246,0.5);"
+              onclick="runAllAgents({{ incident.id }})">
+        <i class="fa-solid fa-play"></i> Run All Agents
+      </button>
+      <button id="btn-refresh-agents" class="btn btn-secondary btn-sm" onclick="loadAgentExecutions({{ incident.id }})">
+        <i class="fa-solid fa-arrows-rotate"></i>
+      </button>
+    </div>
+  </div>
+
+  <div id="agent-execution-grid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap:14px; padding:4px 0;">
+    <!-- Dynamically populated by JS -->
+    <div style="text-align:center; padding:30px; color:var(--text-dim);">
+      <i class="fa-solid fa-spinner fa-spin" style="font-size:1.5rem;"></i>
+      <p style="margin-top:8px;">Loading agent execution data...</p>
+    </div>
+  </div>
+</div>
+
+<!-- Multi-Agent AI Recommendations Grid -->
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title">
+      <i class="fa-solid fa-brain" style="color:#8b5cf6;"></i> Multi-Agent Intelligence & Coordination Output
+    </h3>
+    <span class="badge badge-medium">Multi-Agent Protocol Active</span>
+  </div>
+
+  {% for rec in recommendations %}
+  <div class="agent-card {% if 'Coordinator' in rec.agent_name %}agent-coordinator{% elif 'Police' in rec.agent_name %}agent-police{% elif 'Fire' in rec.agent_name %}agent-fire{% elif 'Medical' in rec.agent_name %}agent-medical{% else %}agent-resources{% endif %}">
+    
+    <div class="agent-card-header">
+      <div class="agent-title">
+        {% if 'Coordinator' in rec.agent_name %}
+          <i class="fa-solid fa-network-wired" style="color:#8b5cf6;"></i>
+        {% elif 'Police' in rec.agent_name %}
+          <i class="fa-solid fa-shield-halved" style="color:#3b82f6;"></i>
+        {% elif 'Fire' in rec.agent_name %}
+          <i class="fa-solid fa-fire-extinguisher" style="color:#ef4444;"></i>
+        {% elif 'Medical' in rec.agent_name %}
+          <i class="fa-solid fa-truck-medical" style="color:#10b981;"></i>
+        {% else %}
+          <i class="fa-solid fa-boxes-stacked" style="color:#f59e0b;"></i>
+        {% endif %}
+        <span>{{ rec.agent_name }}</span>
+      </div>
+      <div>
+        <span class="badge" style="background:rgba(255,255,255,0.1); color:#fff;">
+          Priority: {{ rec.priority_level }}
+        </span>
+        <span class="badge" style="background:rgba(16,185,129,0.2); color:#34d399; margin-left:6px;">
+          Confidence: {{ (rec.confidence * 100)|int }}%
+        </span>
+      </div>
+    </div>
+
+    <!-- Agent Summary -->
+    <div style="font-size:0.95rem; font-weight:600; color:#f3f4f6; margin-bottom:8px;">
+      {{ rec.recommendation_text }}
+    </div>
+
+    <!-- Action Checklist -->
+    {% if rec.actions_list %}
+    <ul class="action-checklist">
+      {% for action in rec.actions_list %}
+      <li>{{ action }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+
+    <!-- Evidence and Basis -->
+    {% if rec.evidence_refs %}
+    <div style="margin-top:10px; font-size:0.78rem; color:var(--text-dim);">
+      <i class="fa-solid fa-database"></i> Evidence Basis: {{ rec.evidence_refs }}
+    </div>
+    {% endif %}
+
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Simulated Alert Dispatches & Human Approval -->
+<div class="card">
+  <div class="card-header">
+    <div>
+      <h3 class="card-title">
+        <i class="fa-solid fa-tower-broadcast" style="color:#ef4444;"></i> Simulated Multi-Agency Alerts & Human Authorization
+      </h3>
+      <p style="font-size:0.8rem; color:var(--text-muted); margin-top:2px;">
+        FR-05 & FR-06 Human-in-the-Loop requirement: Official simulated dispatches must be authorized by an incident commander.
+      </p>
+    </div>
+  </div>
+
+  <div style="display:flex; flex-direction:column; gap:14px;">
+    {% for alert in alerts %}
+    <div class="alert-broadcast-box" id="alert-box-{{ alert.id }}">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <strong style="color:#fff; font-size:0.95rem;">
+            {% if alert.agency_type == 'police' %}<i class="fa-solid fa-shield-halved" style="color:#3b82f6;"></i>
+            {% elif alert.agency_type == 'fire' %}<i class="fa-solid fa-fire-extinguisher" style="color:#ef4444;"></i>
+            {% elif alert.agency_type == 'medical' %}<i class="fa-solid fa-truck-medical" style="color:#10b981;"></i>
+            {% else %}<i class="fa-solid fa-life-ring" style="color:#f59e0b;"></i>{% endif %}
+            {{ alert.agency_name }}
+          </strong>
+          <span class="alert-channel-badge">{{ alert.alert_channel }}</span>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span class="badge" id="alert-status-badge-{{ alert.id }}" style="background:{% if alert.status == 'APPROVED' %}#10b981{% elif alert.status == 'DISPATCHED' %}#3b82f6{% elif alert.status == 'ACKNOWLEDGED' %}#8b5cf6{% else %}#f59e0b{% endif %}; color:#fff;">
+            {{ alert.status }}
+          </span>
+
+          {% if alert.status == 'PENDING_APPROVAL' %}
+          <button class="btn btn-success btn-sm alert-action-btn" data-alert-id="{{ alert.id }}" data-action="APPROVE">
+            <i class="fa-solid fa-check"></i> Authorize Dispatch
+          </button>
+          {% elif alert.status == 'APPROVED' %}
+          <button class="btn btn-primary btn-sm alert-action-btn" data-alert-id="{{ alert.id }}" data-action="DISPATCH">
+            <i class="fa-solid fa-paper-plane"></i> Transmit Radio / CAD
+          </button>
+          {% elif alert.status == 'DISPATCHED' %}
+          <button class="btn btn-secondary btn-sm alert-action-btn" data-alert-id="{{ alert.id }}" data-action="ACKNOWLEDGE">
+            <i class="fa-solid fa-thumbs-up"></i> Unit Acknowledged
+          </button>
+          {% else %}
+          <span style="font-size:0.8rem; color:#34d399;"><i class="fa-solid fa-circle-check"></i> Active On Scene</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <div style="font-size:0.85rem; color:#e2e8f0; font-family:monospace; background:rgba(0,0,0,0.4); padding:10px; border-radius:4px; line-height:1.5;">
+        {{ alert.alert_message }}
+      </div>
+
+      {% if alert.officer_approved_by %}
+      <div style="font-size:0.75rem; color:var(--text-dim); margin-top:6px;">
+        <i class="fa-solid fa-signature"></i> Approved by: <strong>{{ alert.officer_approved_by }}</strong> at {{ alert.acknowledged_at or alert.sent_at }}
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Officer Email Notifications (Requirement: Email Notification Feature) -->
+<div class="card" id="email-notifications-section">
+  <div class="card-header">
+    <div>
+      <h3 class="card-title">
+        <i class="fa-solid fa-envelope-circle-check" style="color:#38bdf8;"></i> Authorized Officer Email Notifications
+      </h3>
+      <p style="font-size:0.8rem; color:var(--text-muted); margin-top:2px;">
+        Automated incident alerts dispatched to registered emergency commanders on intake and status transitions.
+      </p>
+    </div>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <span class="badge" style="background:rgba(56,189,248,0.15); color:#38bdf8; border:1px solid rgba(56,189,248,0.3);">
+        {{ email_logs|length }} Email Dispatches
+      </span>
+      <span class="badge" style="background:rgba(16,185,129,0.15); color:#34d399; border:1px solid rgba(16,185,129,0.3);">
+        <i class="fa-solid fa-shield-halved"></i> Dedup Active
+      </span>
+    </div>
+  </div>
+
+  <div style="display:flex; flex-direction:column; gap:12px;">
+    {% for email in email_logs %}
+    <div style="background:rgba(15, 23, 42, 0.7); border:1px solid var(--border-color); border-radius:8px; padding:14px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-weight:600; color:#f1f5f9; font-size:0.95rem;">
+            <i class="fa-regular fa-envelope" style="color:#94a3b8;"></i> {{ email.recipient_email }}
+          </span>
+          {% if email.notification_type == 'NEW_INCIDENT' %}
+            <span class="badge" style="background:#dc2626; color:#fff;">NEW INCIDENT INTAKE</span>
+          {% elif email.notification_type == 'STATUS_CHANGE' %}
+            <span class="badge" style="background:#2563eb; color:#fff;">STATUS: {{ email.old_status }} &rarr; {{ email.new_status }}</span>
+          {% else %}
+            <span class="badge" style="background:#4b5563; color:#fff;">{{ email.notification_type }}</span>
+          {% endif %}
+        </div>
+
+        <div style="display:flex; align-items:center; gap:8px;">
+          {% if email.status == 'SENT' %}
+            <span class="badge" style="background:#10b981; color:#fff;">
+              <i class="fa-solid fa-circle-check"></i> SENT (Live SMTP)
+            </span>
+          {% elif email.status == 'SIMULATED_SENT' %}
+            <span class="badge" style="background:#0284c7; color:#fff;" title="Demonstration mode: delivery simulated and recorded">
+              <i class="fa-solid fa-paper-plane"></i> SIMULATED DISPATCH
+            </span>
+          {% elif email.status == 'DUPLICATE_SKIPPED' %}
+            <span class="badge" style="background:#f59e0b; color:#fff;" title="Duplicate prevention token matched">
+              <i class="fa-solid fa-filter"></i> DEDUP SKIPPED
+            </span>
+          {% else %}
+            <span class="badge" style="background:#ef4444; color:#fff;">
+              <i class="fa-solid fa-triangle-exclamation"></i> FAILED
+            </span>
+          {% endif %}
+          <span style="font-size:0.75rem; color:var(--text-dim);"><i class="fa-regular fa-clock"></i> {{ email.sent_at }}</span>
+        </div>
+      </div>
+
+      <div style="font-size:0.88rem; color:#cbd5e1; margin-bottom:6px;">
+        <strong style="color:#e2e8f0;">Subject:</strong> {{ email.subject }}
+      </div>
+
+      {% if email.error_message %}
+      <div style="font-size:0.78rem; color:#93c5fd; background:rgba(0,0,0,0.3); padding:6px 10px; border-radius:4px; font-family:monospace; margin-top:4px;">
+        <i class="fa-solid fa-info-circle"></i> {{ email.error_message }}
+      </div>
+      {% endif %}
+
+      <div style="font-size:0.72rem; color:var(--text-dim); margin-top:6px; display:flex; justify-content:space-between;">
+        <span><i class="fa-solid fa-fingerprint"></i> Token: <code>{{ email.dedup_key }}</code></span>
+        <span>Environment Security: Encrypted / Env-Configured</span>
+      </div>
+    </div>
+    {% else %}
+    <div style="text-align:center; padding:20px; color:var(--text-dim); font-size:0.88rem;">
+      <i class="fa-solid fa-envelope-open" style="font-size:1.8rem; margin-bottom:8px; display:block; opacity:0.4;"></i>
+      No email notifications recorded for this incident yet.
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Audit Trail & Event Timeline -->
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title">
+      <i class="fa-solid fa-clock-rotate-left" style="color:#60a5fa;"></i> Incident Audit Trail & Governance History
+    </h3>
+    <span style="font-size:0.8rem; color:var(--text-muted);">FR-08 Compliance</span>
+  </div>
+
+  <div style="position:relative; padding-left:24px; border-left:2px solid var(--border-color);">
+    {% for log in logs %}
+    <div style="margin-bottom:16px; position:relative;">
+      <div style="position:absolute; left:-31px; top:2px; width:12px; height:12px; border-radius:50%; background:#3b82f6; border:2px solid var(--bg-primary);"></div>
+      <div style="display:flex; justify-content:space-between; font-size:0.8rem; color:var(--text-dim);">
+        <span><strong>{{ log.actor_name }}</strong> ({{ log.actor_role }}) &bull; <code style="color:#93c5fd;">{{ log.action_type }}</code></span>
+        <span>{{ log.timestamp }}</span>
+      </div>
+      <div style="font-size:0.88rem; color:#e2e8f0; margin-top:2px;">{{ log.details }}</div>
+    </div>
+    {% else %}
+    <div style="color:var(--text-dim); font-size:0.85rem;">No audit records available.</div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// ═══════════════════════════════════════════════════════════════
+// ⚡ Agentic AI Autonomous Operations — autoOperateIncident()
+// ═══════════════════════════════════════════════════════════════
+async function autoOperateIncident(incId) {
+  const btn = document.getElementById('btn-operate-auto');
+  const traceCard = document.getElementById('agentic-trace-card');
+  const traceSteps = document.getElementById('agentic-trace-steps');
+
+  // Disable button and show progress
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Executing Autonomous Operations…';
+    btn.style.opacity = '0.7';
+  }
+  if (traceCard) traceCard.style.display = 'block';
+  if (traceSteps) traceSteps.innerHTML = '<div style="color:#fbbf24; font-size:0.85rem;"><i class="fa-solid fa-spinner fa-spin"></i> Initiating autonomous agentic pipeline…</div>';
+
+  try {
+    const res = await fetch(`/api/incident/${incId}/operate-auto`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ target_status: 'Dispatched' })
+    });
+    const data = await res.json();
+
+    if (data.success && data.trace) {
+      // Render each trace step with sequential animation
+      if (traceSteps) {
+        traceSteps.innerHTML = '';
+        const stepIcons = {
+          'verify_incident': 'fa-magnifying-glass',
+          'ground_truth_verification': 'fa-satellite-dish',
+          'multi_agency_authorization': 'fa-building-shield',
+          'dispatch_alerts': 'fa-tower-broadcast',
+          'advance_status': 'fa-arrow-right-to-bracket',
+          'send_notifications': 'fa-envelope',
+          'audit_log': 'fa-file-shield',
+          'complete': 'fa-circle-check'
+        };
+
+        data.trace.forEach((step, idx) => {
+          const icon = stepIcons[step.step_id] || 'fa-gear';
+          const statusColor = step.status === 'completed' ? '#10b981' : (step.status === 'failed' ? '#ef4444' : '#f59e0b');
+          const statusIcon = step.status === 'completed' ? 'fa-circle-check' : (step.status === 'failed' ? 'fa-circle-xmark' : 'fa-clock');
+
+          const stepEl = document.createElement('div');
+          stepEl.style.cssText = `
+            display:flex; align-items:flex-start; gap:10px; padding:10px 12px;
+            background:rgba(15,23,42,0.7); border:1px solid rgba(245,158,11,0.15);
+            border-left:3px solid ${statusColor}; border-radius:6px;
+            opacity:0; transform:translateX(-10px);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+          `;
+          stepEl.innerHTML = `
+            <div style="color:${statusColor}; font-size:1rem; margin-top:2px; min-width:20px; text-align:center;">
+              <i class="fa-solid ${icon}"></i>
+            </div>
+            <div style="flex:1;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
+                <strong style="color:#e2e8f0; font-size:0.82rem;">${step.label || step.step_id}</strong>
+                <span style="font-size:0.7rem; color:${statusColor};"><i class="fa-solid ${statusIcon}"></i> ${step.status.toUpperCase()}</span>
+              </div>
+              <div style="font-size:0.75rem; color:#94a3b8;">${step.detail || ''}</div>
+              ${step.duration_ms ? `<div style="font-size:0.68rem; color:var(--text-dim); margin-top:2px;"><i class="fa-solid fa-stopwatch"></i> ${step.duration_ms}ms</div>` : ''}
+            </div>
+          `;
+          traceSteps.appendChild(stepEl);
+
+          // Animate step appearance with delay
+          setTimeout(() => {
+            stepEl.style.opacity = '1';
+            stepEl.style.transform = 'translateX(0)';
+          }, idx * 200);
+        });
+      }
+
+      // Update status display
+      const statusDisplay = document.getElementById('current-status-display');
+      if (statusDisplay && data.new_status) {
+        statusDisplay.textContent = data.new_status;
+        statusDisplay.style.color = '#10b981';
+      }
+
+      // Audio dispatch broadcast
+      if (window.DisasterSync && window.DisasterSync.speakRadioDispatch) {
+        window.DisasterSync.speakRadioDispatch("Autonomous agentic emergency response dispatches transmitted.");
+      }
+      if (window.DisasterSync && window.DisasterSync.playAlertBeep) {
+        window.DisasterSync.playAlertBeep();
+      }
+
+      // Toast notification
+      const dispatchCount = data.dispatches_authorized || 0;
+      const emailsSent = data.emails_sent || 0;
+      if (window.DisasterSync && window.DisasterSync.showToast) {
+        window.DisasterSync.showToast(
+          `✅ Agentic AI operated successfully — ${dispatchCount} dispatches authorized, ${emailsSent} email(s) sent, status → ${data.new_status || 'Dispatched'}`,
+          'success'
+        );
+      }
+
+      // Refresh agent execution grid
+      if (typeof loadAgentExecutions === 'function') {
+        await loadAgentExecutions(incId);
+      }
+
+      // Reload after a moment to update all UI
+      setTimeout(() => location.reload(), 3000);
+
+    } else {
+      // Operation returned but was not successful
+      const errMsg = data.error || data.message || 'Autonomous operation could not complete.';
+      if (traceSteps) {
+        traceSteps.innerHTML = `
+          <div style="color:#f87171; padding:12px; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); border-radius:6px;">
+            <i class="fa-solid fa-circle-exclamation"></i> <strong>Operation Failed:</strong> ${errMsg}
+          </div>`;
+      }
+      if (window.DisasterSync && window.DisasterSync.showToast) {
+        window.DisasterSync.showToast(`❌ ${errMsg}`, 'danger');
+      }
+    }
+  } catch (err) {
+    if (traceSteps) {
+      traceSteps.innerHTML = `
+        <div style="color:#f87171; padding:12px; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3); border-radius:6px;">
+          <i class="fa-solid fa-circle-exclamation"></i> <strong>Network Error:</strong> ${err.message}
+        </div>`;
+    }
+    if (window.DisasterSync && window.DisasterSync.showToast) {
+      window.DisasterSync.showToast('Network error triggering autonomous operations: ' + err.message, 'danger');
+    }
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-bolt"></i> Operate Agentic AI Automatically';
+      btn.style.opacity = '1';
+    }
+  }
+}
+
+// Agent Execution Orchestrator Functions (Req 8, 9, 10, 19)
+async function loadAgentExecutions(incId) {
+  const grid = document.getElementById('agent-execution-grid');
+  const summaryEl = document.getElementById('agent-status-summary');
+  if (!grid) return;
+
+  try {
+    const res = await fetch(`/api/incident/${incId}/agents`);
+    const data = await res.json();
+    if (!data.success || !data.executions || data.executions.length === 0) {
+      grid.innerHTML = `
+        <div style="grid-column: 1/-1; text-align:center; padding:24px; background:rgba(15,23,42,0.6); border:1px dashed var(--border-color); border-radius:8px;">
+          <p style="color:var(--text-dim); margin-bottom:12px;">No agent execution records logged for this incident yet.</p>
+          <button class="btn btn-primary btn-sm" onclick="runAllAgents(${incId})">
+            <i class="fa-solid fa-play"></i> Initialize All 5 AI Agents
+          </button>
+        </div>`;
+      if (summaryEl) summaryEl.textContent = '0/5 Initialized';
+      return;
+    }
+
+    if (summaryEl) {
+      summaryEl.innerHTML = `<span style="color:#10b981; font-weight:600;">${data.completed}/${data.total_agents} Completed</span>` +
+        (data.failed > 0 ? ` &bull; <span style="color:#ef4444;">${data.failed} Failed</span>` : '') +
+        (data.pending > 0 ? ` &bull; <span style="color:#f59e0b;">${data.pending} Active</span>` : '');
+    }
+
+    grid.innerHTML = data.executions.map(ex => {
+      let statusBadge = '';
+      if (ex.status === 'COMPLETED') {
+        statusBadge = `<span class="badge" style="background:rgba(16,185,129,0.2); color:#34d399; border:1px solid rgba(16,185,129,0.4);"><i class="fa-solid fa-circle-check"></i> Completed</span>`;
+      } else if (ex.status === 'RUNNING') {
+        statusBadge = `<span class="badge" style="background:rgba(59,130,246,0.2); color:#60a5fa; border:1px solid rgba(59,130,246,0.4);"><i class="fa-solid fa-spinner fa-spin"></i> Running</span>`;
+      } else if (ex.status === 'FAILED') {
+        statusBadge = `<span class="badge" style="background:rgba(239,68,68,0.2); color:#f87171; border:1px solid rgba(239,68,68,0.4);"><i class="fa-solid fa-triangle-exclamation"></i> Failed</span>`;
+      } else {
+        statusBadge = `<span class="badge" style="background:rgba(245,158,11,0.2); color:#fbbf24; border:1px solid rgba(245,158,11,0.4);"><i class="fa-solid fa-clock"></i> Pending</span>`;
+      }
+
+      const modeBadge = ex.analysis_mode === 'gemini_enhanced' 
+        ? `<span class="badge" style="background:rgba(139,92,246,0.2); color:#c084fc; font-size:0.68rem;"><i class="fa-solid fa-wand-magic-sparkles"></i> Gemini LLM</span>`
+        : `<span class="badge" style="background:rgba(148,163,184,0.15); color:#94a3b8; font-size:0.68rem;"><i class="fa-solid fa-microchip"></i> Expert Engine</span>`;
+
+      const resp = ex.response || {};
+      const actions = resp.suggested_actions || [];
+
+      return `
+        <div style="background:rgba(15,23,42,0.85); border:1px solid ${ex.color || 'var(--border-color)'}; border-left:4px solid ${ex.color || '#8b5cf6'}; border-radius:8px; padding:14px; display:flex; flex-direction:column; justify-content:space-between;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px; gap:8px;">
+              <div style="display:flex; align-items:center; gap:8px;">
+                <i class="fa-solid ${ex.icon || 'fa-robot'}" style="color:${ex.color || '#8b5cf6'}; font-size:1.1rem;"></i>
+                <strong style="color:#fff; font-size:0.95rem;">${ex.agent_name}</strong>
+              </div>
+              <div style="display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end;">
+                ${modeBadge}
+                ${statusBadge}
+              </div>
+            </div>
+
+            <!-- Execution Timing & Diagnostic Info -->
+            <div style="display:flex; gap:12px; font-size:0.75rem; color:var(--text-dim); margin-bottom:10px;">
+              <span><i class="fa-solid fa-stopwatch"></i> ${ex.execution_time_ms || 0} ms</span>
+              ${resp.priority_level ? `<span><i class="fa-solid fa-flag"></i> Priority: <strong>${resp.priority_level}</strong></span>` : ''}
+              ${resp.confidence ? `<span><i class="fa-solid fa-shield-halved"></i> Confidence: ${Math.round(resp.confidence * 100)}%</span>` : ''}
+            </div>
+
+            <!-- Agent Summary Text -->
+            <div style="font-size:0.85rem; color:#e2e8f0; line-height:1.45; margin-bottom:10px;">
+              ${resp.summary ? resp.summary : (ex.error_message ? `<span style="color:#f87171;"><i class="fa-solid fa-circle-exclamation"></i> Error: ${ex.error_message}</span>` : '<span style="color:var(--text-dim); font-style:italic;">Awaiting analysis execution...</span>')}
+            </div>
+
+            <!-- Suggested Actions Checklist -->
+            ${actions.length > 0 ? `
+              <div style="margin-top:8px;">
+                <div style="font-size:0.75rem; color:var(--text-dim); text-transform:uppercase; font-weight:bold; letter-spacing:0.5px; margin-bottom:4px;">Action Protocols:</div>
+                <ul style="margin:0; padding-left:18px; font-size:0.78rem; color:#cbd5e1; line-height:1.4;">
+                  ${actions.slice(0, 3).map(a => `<li>${a}</li>`).join('')}
+                </ul>
+              </div>` : ''}
+
+            <!-- Evidence or Details -->
+            ${resp.evidence_refs ? `
+              <div style="font-size:0.73rem; color:#94a3b8; margin-top:8px; border-top:1px dashed rgba(255,255,255,0.1); padding-top:6px;">
+                <i class="fa-solid fa-magnifying-glass"></i> ${resp.evidence_refs}
+              </div>` : ''}
+          </div>
+
+          <div style="margin-top:10px; font-size:0.7rem; color:var(--text-dim); display:flex; justify-content:space-between; align-items:center;">
+            <span>ID: ${ex.agent_id}</span>
+            <span>${ex.completed_at ? 'Finished: ' + ex.completed_at : (ex.started_at ? 'Started: ' + ex.started_at : '')}</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+  } catch (err) {
+    grid.innerHTML = `<div style="grid-column: 1/-1; color:#f87171; text-align:center; padding:16px;">Failed to load agent execution details: ${err.message}</div>`;
+  }
+}
+
+async function runAllAgents(incId) {
+  const btn = document.getElementById('btn-run-all-agents');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Executing All 5 Agents...`;
+  }
+
+  try {
+    const res = await fetch(`/api/incident/${incId}/agents/run`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ force: true })
+    });
+    const data = await res.json();
+    if (data.success) {
+      if (window.DisasterSync && window.DisasterSync.showToast) {
+        window.DisasterSync.showToast(data.message || 'All 5 AI agents executed successfully!', 'success');
+      }
+      await loadAgentExecutions(incId);
+      // Also reload page after a brief moment to update recommendations & alerts cards
+      setTimeout(() => location.reload(), 1500);
+    } else {
+      if (window.DisasterSync && window.DisasterSync.showToast) {
+        window.DisasterSync.showToast(data.error || 'Agent execution failed', 'danger');
+      }
+    }
+  } catch (err) {
+    if (window.DisasterSync && window.DisasterSync.showToast) {
+      window.DisasterSync.showToast('Network error triggering agents: ' + err.message, 'danger');
+    }
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = `<i class="fa-solid fa-play"></i> Run All Agents`;
+    }
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Initial load of agent executions
+  loadAgentExecutions({{ incident.id }});
+  // Update Status handler
+  const updateBtn = document.getElementById('update-status-btn');
+  if (updateBtn) {
+    updateBtn.addEventListener('click', async () => {
+      const incId = updateBtn.getAttribute('data-incident-id');
+      const newStatus = document.getElementById('officer-status-select').value;
+      
+      try {
+        const resp = await fetch(`/api/incident/${incId}/status`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: newStatus, officer_name: 'Command Duty Officer' })
+        });
+        const data = await resp.json();
+        if (data.success) {
+          document.getElementById('current-status-display').textContent = newStatus;
+          let toastMsg = `Status updated to ${newStatus}.`;
+          if (data.email_notifications && data.email_notifications.results) {
+            const statusSummary = data.email_notifications.results.map(r => r.status).join(', ');
+            toastMsg += ` Email alert dispatched (${statusSummary}).`;
+          }
+          window.DisasterSync.showToast(toastMsg, 'success');
+          setTimeout(() => location.reload(), 1200);
+        } else {
+          window.DisasterSync.showToast(data.error || 'Failed to update status', 'danger');
+        }
+      } catch (err) {
+        window.DisasterSync.showToast('Network error updating status', 'danger');
+      }
+    });
+  }
+
+  // Simulated Alert Actions
+  document.querySelectorAll('.alert-action-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      const alertId = btn.getAttribute('data-alert-id');
+      const action = btn.getAttribute('data-action');
+      
+      try {
+        const resp = await fetch(`/api/alert/${alertId}/action`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: action, officer_name: 'Command Duty Officer' })
+        });
+        const data = await resp.json();
+        if (data.success) {
+          window.DisasterSync.playAlertBeep();
+          if (window.DisasterSync.speakRadioDispatch) {
+            window.DisasterSync.speakRadioDispatch("Simulated emergency dispatch broadcast transmitted.");
+          }
+          window.DisasterSync.showToast(data.message, 'success');
+          setTimeout(() => location.reload(), 900);
+        }
+      } catch (err) {
+        window.DisasterSync.showToast('Error authorizing alert', 'danger');
+      }
+    });
+  });
+
+  // Incident Live Camera Modal Handler
+  const openCamBtn = document.getElementById('btn-open-incident-camera');
+  const camModal = document.getElementById('incident-camera-modal');
+  const modalCloseBtn = document.getElementById('incident-cam-modal-close');
+  const modalVideo = document.getElementById('incident-cam-video');
+  const modalSnapBtn = document.getElementById('incident-cam-snap-btn');
+  const modalStopBtn = document.getElementById('incident-cam-stop-btn');
+  let incStream = null;
+
+  async function openIncidentCamera() {
+    if (camModal) camModal.classList.add('active');
+    try {
+      incStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      if (modalVideo) {
+        modalVideo.srcObject = incStream;
+        await modalVideo.play();
+      }
+    } catch (e) {
+      window.DisasterSync.showToast('Camera permission denied or camera device unavailable.', 'danger');
+    }
+  }
+
+  function closeIncidentCamera() {
+    if (incStream) {
+      incStream.getTracks().forEach(t => t.stop());
+      incStream = null;
+    }
+    if (modalVideo) modalVideo.srcObject = null;
+    if (camModal) camModal.classList.remove('active');
+  }
+
+  if (openCamBtn) openCamBtn.addEventListener('click', openIncidentCamera);
+  if (modalCloseBtn) modalCloseBtn.addEventListener('click', closeIncidentCamera);
+  if (modalStopBtn) modalStopBtn.addEventListener('click', closeIncidentCamera);
+
+  if (modalSnapBtn) {
+    modalSnapBtn.addEventListener('click', async () => {
+      if (!modalVideo || !incStream) return;
+      const canvas = document.createElement('canvas');
+      canvas.width = modalVideo.videoWidth || 800;
+      canvas.height = modalVideo.videoHeight || 600;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(modalVideo, 0, 0, canvas.width, canvas.height);
+
+      // Watermark HUD
+      const bannerH = 75;
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+      ctx.fillRect(0, canvas.height - bannerH, canvas.width, bannerH);
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(0, canvas.height - bannerH, canvas.width, bannerH);
+
+      ctx.fillStyle = '#38bdf8';
+      ctx.font = 'bold 16px monospace';
+      ctx.fillText("📍 LIVE GEOTAG: {{ incident.latitude }}° N, {{ incident.longitude }}° E | {{ incident.emergency_type }}", 18, canvas.height - bannerH + 26);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '13px sans-serif';
+      ctx.fillText("LOCATION: {{ incident.location_address }}", 18, canvas.height - bannerH + 46);
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '11px sans-serif';
+      ctx.fillText("ON-SCENE CAMERA STREAM | {{ incident.incident_code }}", 18, canvas.height - bannerH + 64);
+
+      const photoData = canvas.toDataURL('image/jpeg', 0.9);
+      closeIncidentCamera();
+
+      try {
+        const resp = await fetch("/api/incident/{{ incident.id }}/photo", {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ photo_data: photoData })
+        });
+        const data = await resp.json();
+        if (data.success) {
+          window.DisasterSync.playAlertBeep();
+          window.DisasterSync.showToast("Live photo attached and saved with incident ID!", "success");
+          setTimeout(() => location.reload(), 800);
+        } else {
+          window.DisasterSync.showToast(data.error || "Failed to save photo", "danger");
+        }
+      } catch (err) {
+        window.DisasterSync.showToast("Network error uploading photo", "danger");
+      }
+    });
+  }
+});
+</script>
+
+<!-- Incident Live Camera Modal -->
+<div id="incident-camera-modal" class="modal-overlay">
+  <div class="modal-content" style="border: 2px solid #3b82f6; max-width:640px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <h3 style="color:#60a5fa; margin:0; display:flex; align-items:center; gap:8px;">
+        <i class="fa-solid fa-camera"></i> Live On-Scene Camera &bull; {{ incident.incident_code }}
+      </h3>
+      <button type="button" id="incident-cam-modal-close" style="background:none; border:none; color:var(--text-muted); font-size:1.4rem; cursor:pointer;">&times;</button>
+    </div>
+
+    <div style="position:relative; width:100%; border-radius:8px; overflow:hidden; background:#000; height:320px; display:flex; align-items:center; justify-content:center;">
+      <video id="incident-cam-video" autoplay playsinline muted style="width:100%; height:100%; object-fit:cover;"></video>
+      <div style="position:absolute; top:12px; left:12px; display:flex; align-items:center; gap:6px;">
+        <span style="width:10px; height:10px; border-radius:50%; background:#ef4444; animation:pulse-red 1s infinite;"></span>
+        <span style="font-size:11px; font-family:monospace; color:#ef4444; font-weight:bold;">LIVE STREAM</span>
+      </div>
+    </div>
+
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px;">
+      <button type="button" class="btn btn-secondary btn-sm" id="incident-cam-stop-btn">
+        <i class="fa-solid fa-xmark"></i> Cancel
+      </button>
+      <button type="button" class="btn btn-danger btn-sm" id="incident-cam-snap-btn" style="padding:8px 20px;">
+        <i class="fa-solid fa-camera"></i> Capture &amp; Attach Photo
+      </button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

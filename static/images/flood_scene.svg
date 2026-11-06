@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" width="100%" height="100%">
+  <defs>
+    <linearGradient id="skyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="60%" stop-color="#334155"/>
+      <stop offset="100%" stop-color="#475569"/>
+    </linearGradient>
+    <linearGradient id="waterGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1e40af"/>
+      <stop offset="40%" stop-color="#1d4ed8"/>
+      <stop offset="100%" stop-color="#0f172a"/>
+    </linearGradient>
+    <linearGradient id="floodGlow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#0284c7" stop-opacity="0.6"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Sky -->
+  <rect width="800" height="300" fill="url(#skyGrad)"/>
+
+  <!-- Rain lines -->
+  <g stroke="#94a3b8" stroke-width="1.2" opacity="0.4">
+    <line x1="50" y1="20" x2="30" y2="120"/>
+    <line x1="120" y1="40" x2="100" y2="150"/>
+    <line x1="220" y1="10" x2="200" y2="130"/>
+    <line x1="340" y1="30" x2="320" y2="160"/>
+    <line x1="460" y1="15" x2="440" y2="140"/>
+    <line x1="580" y1="45" x2="560" y2="170"/>
+    <line x1="680" y1="25" x2="660" y2="150"/>
+    <line x1="750" y1="50" x2="730" y2="180"/>
+  </g>
+
+  <!-- Distant submerged houses -->
+  <polygon points="100,240 140,190 180,240" fill="#475569"/>
+  <rect x="110" y="240" width="60" height="40" fill="#334155"/>
+  <polygon points="260,230 320,170 380,230" fill="#64748b"/>
+  <rect x="275" y="230" width="90" height="50" fill="#475569"/>
+  
+  <!-- Submerged house in foreground with residents on rooftop -->
+  <polygon points="450,220 560,130 670,220" fill="#78350f"/>
+  <rect x="470" y="220" width="180" height="90" fill="#92400e"/>
+  <rect x="520" y="235" width="40" height="50" fill="#1e293b"/>
+
+  <!-- Rooftop distress figures -->
+  <circle cx="530" cy="120" r="8" fill="#facc15"/>
+  <line x1="530" y1="128" x2="530" y2="145" stroke="#facc15" stroke-width="4"/>
+  <line x1="530" y1="134" x2="515" y2="125" stroke="#facc15" stroke-width="3"/>
+  <line x1="530" y1="134" x2="545" y2="120" stroke="#facc15" stroke-width="3"/>
+
+  <circle cx="560" cy="122" r="8" fill="#f87171"/>
+  <line x1="560" y1="130" x2="560" y2="147" stroke="#f87171" stroke-width="4"/>
+  <line x1="560" y1="136" x2="575" y2="122" stroke="#f87171" stroke-width="3"/>
+
+  <!-- Submerged Car Roof -->
+  <path d="M 220 280 Q 250 260 290 260 Q 320 260 340 280 Z" fill="#b91c1c"/>
+  <rect x="240" y="265" width="30" height="12" fill="#93c5fd" opacity="0.8"/>
+  <rect x="280" y="265" width="30" height="12" fill="#93c5fd" opacity="0.8"/>
+
+  <!-- Flood Waters -->
+  <rect x="0" y="270" width="800" height="230" fill="url(#waterGrad)"/>
+  
+  <!-- Waves -->
+  <path d="M 0 285 Q 100 275 200 285 T 400 285 T 600 285 T 800 285 L 800 500 L 0 500 Z" fill="url(#floodGlow)"/>
+  <path d="M 0 310 Q 120 295 240 310 T 480 310 T 720 310 T 800 310" stroke="#60a5fa" stroke-width="2" fill="none" opacity="0.6"/>
+
+  <!-- Water depth warning pole -->
+  <rect x="80" y="210" width="12" height="150" fill="#facc15"/>
+  <rect x="80" y="220" width="12" height="15" fill="#000"/>
+  <rect x="80" y="250" width="12" height="15" fill="#000"/>
+  <rect x="80" y="280" width="12" height="15" fill="#ef4444"/>
+  <text x="100" y="255" fill="#f87171" font-family="sans-serif" font-size="12" font-weight="bold">DANGER: 4.8 FT RISING</text>
+
+  <!-- LIVE GEOTAG WATERMARK OVERLAY -->
+  <rect x="20" y="405" width="760" height="75" rx="8" fill="rgba(15, 23, 42, 0.85)" stroke="#38bdf8" stroke-width="1.5"/>
+  <circle cx="50" cy="442" r="14" fill="#ef4444"/>
+  <text x="50" y="447" fill="#fff" font-family="sans-serif" font-size="13" font-weight="bold" text-anchor="middle">LIVE</text>
+  
+  <text x="80" y="432" fill="#38bdf8" font-family="monospace" font-size="15" font-weight="bold">📍 GEOTAG: 15.9080° N, 80.4730° E &bull; ACCURACY: &plusmn;3m</text>
+  <text x="80" y="452" fill="#f1f5f9" font-family="sans-serif" font-size="12">LOCATION: East Colony, Ward 4, Near Overhead Municipal Tank, Bapatla</text>
+  <text x="80" y="468" fill="#94a3b8" font-family="sans-serif" font-size="11">TIMESTAMP: 2026-11-06 16:09:45 IST &bull; VERIFIED CITIZEN LIVE CAMERA STREAM</text>
+</svg>
+

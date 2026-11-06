@@ -1,0 +1,542 @@
+{% extends "base.html" %}
+
+{% block title %}Agency Command Center - {{ project_name }}{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 24px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+  <div>
+    <h1 style="font-size: 1.8rem; font-weight: 800; color: #fff; display:flex; align-items:center; gap:12px;">
+      <i class="fa-solid fa-headset" style="color:#3b82f6;"></i> Multi-Agency Incident Command Center
+    </h1>
+    <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 4px;">
+      Live situational awareness, automated agent triage, spatial duplicate detection & human-in-the-loop dispatch controls.
+    </p>
+  </div>
+
+  <!-- Action Controls -->
+  <div style="display:flex; gap:10px; flex-wrap:wrap;">
+    <button id="toggle-analytics-btn" class="btn btn-secondary btn-sm" style="border-color:#3b82f6; color:#93c5fd;">
+      <i class="fa-solid fa-chart-pie"></i> Disaster Analytics
+    </button>
+    <button id="btn-test-email" class="btn btn-secondary btn-sm" style="border-color:#38bdf8; color:#38bdf8;">
+      <i class="fa-solid fa-envelope-circle-check"></i> Test Email
+    </button>
+    <button id="refresh-dashboard-btn" class="btn btn-secondary btn-sm">
+      <i class="fa-solid fa-rotate"></i> Refresh
+    </button>
+    <button id="load-scenario-dash-btn" class="btn btn-warning btn-sm">
+      <i class="fa-solid fa-wand-magic-sparkles"></i> Load Hackathon Demo Scenario
+    </button>
+    <a href="{{ url_for('report_page') }}" class="btn btn-primary btn-sm">
+      <i class="fa-solid fa-plus"></i> New Report
+    </a>
+  </div>
+</div>
+
+<!-- ==================================================================== -->
+<!-- AUTONOMOUS AI OPERATOR COMMAND DOCK & COPILOT CONSOLE (Req: AI to operate the project) -->
+<!-- ==================================================================== -->
+<div class="card" id="ai-operator-dock" style="margin-bottom: 24px; border: 2px solid #8b5cf6; background: linear-gradient(135deg, rgba(30, 27, 75, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%); box-shadow: 0 10px 30px rgba(139, 92, 246, 0.25);">
+  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:14px; border-bottom:1px solid rgba(139,92,246,0.3); padding-bottom:12px;">
+    <div style="display:flex; align-items:center; gap:12px;">
+      <div style="width:40px; height:40px; border-radius:8px; background:rgba(139,92,246,0.25); display:flex; align-items:center; justify-content:center; color:#c084fc; font-size:1.3rem;">
+        <i class="fa-solid fa-robot"></i>
+      </div>
+      <div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <h3 style="color:#fff; margin:0; font-size:1.15rem; font-weight:800;">Autonomous AI Operator Co-Pilot</h3>
+          <span id="ai-operator-badge" class="badge" style="background:rgba(16,185,129,0.2); color:#34d399; border:1px solid rgba(16,185,129,0.4); font-size:0.75rem;">
+            <i class="fa-solid fa-circle" style="font-size:0.5rem; animation:pulse-green 1.5s infinite;"></i> AUTONOMOUS AUTO-PILOT ON
+          </span>
+        </div>
+        <div style="font-size:0.78rem; color:#cbd5e1; margin-top:2px;" id="ai-operator-action-ticker">
+          <i class="fa-solid fa-terminal" style="color:#c084fc;"></i> <span id="operator-ticker-text">AI Operator actively supervising all 10 emergency response agents...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mode Controls -->
+    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+      <button type="button" class="btn btn-secondary btn-sm" id="btn-toggle-auto" onclick="toggleAIOperatorMode()" style="border-color:#10b981; color:#34d399; font-size:0.78rem;">
+        <i class="fa-solid fa-power-off"></i> Auto-Pilot: <strong id="auto-mode-label">ON</strong>
+      </button>
+      <button type="button" class="btn btn-secondary btn-sm" onclick="triggerImmediateAICycle()" style="border-color:#38bdf8; color:#38bdf8; font-size:0.78rem;">
+        <i class="fa-solid fa-forward-step"></i> Trigger AI Sweep
+      </button>
+      <button type="button" class="btn btn-secondary btn-sm" id="btn-toggle-voice" onclick="toggleVoiceRadio()" style="border-color:#a855f7; color:#c084fc; font-size:0.78rem;">
+        <i class="fa-solid fa-volume-high"></i> Voice: <strong id="voice-mode-label">ON</strong>
+      </button>
+      <a href="{{ url_for('agents_dashboard_page') }}" class="btn btn-primary btn-sm" style="font-size:0.78rem; background:#8b5cf6; border-color:#8b5cf6;">
+        <i class="fa-solid fa-microchip"></i> 10-Agent Grid
+      </a>
+    </div>
+  </div>
+
+  <!-- Interactive Commander Directive Bar -->
+  <form id="ai-operator-cmd-form" onsubmit="submitAIOperatorCommand(event)" style="margin-bottom:12px; display:flex; gap:8px; flex-wrap:wrap;">
+    <div style="flex:1; min-width:260px; position:relative;">
+      <i class="fa-solid fa-wand-magic-sparkles" style="position:absolute; left:12px; top:12px; color:#c084fc;"></i>
+      <input type="text" id="ai-operator-cmd-input" class="form-control" style="padding-left:36px; background:rgba(15,23,42,0.8); border:1px solid rgba(139,92,246,0.4); color:#fff; font-size:0.9rem;"
+             placeholder="Instruct AI Operator: e.g. 'Summarize active disaster status', 'Audit hospital resources', 'Run self-healing diagnostics'...">
+    </div>
+    <button type="submit" class="btn btn-primary btn-sm" id="btn-submit-cmd" style="padding:8px 20px; background:#8b5cf6; border-color:#8b5cf6; box-shadow:0 0 12px rgba(139,92,246,0.4);">
+      <i class="fa-solid fa-paper-plane"></i> Execute Directive
+    </button>
+  </form>
+
+  <!-- Quick Command Chips -->
+  <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px;" id="operator-chips">
+    <span style="font-size:0.75rem; color:var(--text-dim); display:flex; align-items:center; margin-right:4px;">Quick Directives:</span>
+    <button type="button" class="badge" onclick="runQuickChip('Summarize operational status and disaster impact')" style="background:rgba(139,92,246,0.15); color:#c084fc; border:1px solid rgba(139,92,246,0.3); cursor:pointer;">
+      📋 Executive Brief
+    </button>
+    <button type="button" class="badge" onclick="runQuickChip('Audit emergency resources and identify shortages')" style="background:rgba(234,179,8,0.15); color:#facc15; border:1px solid rgba(234,179,8,0.3); cursor:pointer;">
+      🚒 Resource Shortage Audit
+    </button>
+    <button type="button" class="badge" onclick="runQuickChip('Run self-healing diagnostics and verify system integrity')" style="background:rgba(236,72,153,0.15); color:#f472b6; border:1px solid rgba(236,72,153,0.3); cursor:pointer;">
+      🔧 Self-Healing Diagnostic
+    </button>
+    <button type="button" class="badge" onclick="runQuickChip('Simulate a new emergency flood incident')" style="background:rgba(59,130,246,0.15); color:#60a5fa; border:1px solid rgba(59,130,246,0.3); cursor:pointer;">
+      🚨 Simulate Emergency
+    </button>
+    <button type="button" class="badge" onclick="runQuickChip('Triage all active emergency incidents')" style="background:rgba(16,185,129,0.15); color:#34d399; border:1px solid rgba(16,185,129,0.3); cursor:pointer;">
+      ⚡ Auto-Triage Incidents
+    </button>
+    <button type="button" class="badge" onclick="runQuickChip('Send test email to verify Gmail gateway delivery')" style="background:rgba(56,189,248,0.15); color:#38bdf8; border:1px solid rgba(56,189,248,0.3); cursor:pointer;">
+      📧 Verify Gmail Gateway
+    </button>
+  </div>
+
+  <!-- AI Operator Execution Output Terminal -->
+  <div id="ai-operator-output-card" style="display:none; background:rgba(0,0,0,0.5); border:1px solid rgba(139,92,246,0.3); border-radius:6px; padding:12px; margin-top:4px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; border-bottom:1px solid rgba(255,255,255,0.08); padding-bottom:4px;">
+      <span style="font-size:0.75rem; color:#a78bfa; font-weight:700;"><i class="fa-solid fa-terminal"></i> AI Operator Directive Output</span>
+      <button type="button" onclick="document.getElementById('ai-operator-output-card').style.display='none'" style="background:none; border:none; color:var(--text-dim); cursor:pointer; font-size:0.8rem;">&times; Dismiss</button>
+    </div>
+    <div id="ai-operator-output-text" style="font-size:0.84rem; color:#f1f5f9; line-height:1.55; white-space:pre-wrap; font-family:var(--font-sans);"></div>
+  </div>
+</div>
+
+<!-- Stats Strip -->
+<div class="grid-4" style="margin-bottom: 24px;">
+  <div class="stat-card">
+    <div class="stat-icon" style="background:rgba(59,130,246,0.15); color:#60a5fa;">
+      <i class="fa-solid fa-layer-group"></i>
+    </div>
+    <div>
+      <div class="stat-value" id="dash-stat-total">{{ stats.total }}</div>
+      <div class="stat-label">Total Incidents</div>
+    </div>
+  </div>
+
+  <div class="stat-card" style="border-color:rgba(239,68,68,0.4);">
+    <div class="stat-icon" style="background:rgba(239,68,68,0.2); color:#f87171;">
+      <i class="fa-solid fa-bell"></i>
+    </div>
+    <div>
+      <div class="stat-value" id="dash-stat-critical" style="color:#f87171;">{{ stats.critical }}</div>
+      <div class="stat-label">Critical / Active SOS</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon" style="background:rgba(245,158,11,0.15); color:#fbbf24;">
+      <i class="fa-solid fa-truck-ramp-box"></i>
+    </div>
+    <div>
+      <div class="stat-value" id="dash-stat-dispatches" style="color:#fbbf24;">{{ stats.dispatches }}</div>
+      <div class="stat-label">Simulated Dispatches</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon" style="background:rgba(16,185,129,0.15); color:#34d399;">
+      <i class="fa-solid fa-check-double"></i>
+    </div>
+    <div>
+      <div class="stat-value" id="dash-stat-resolved" style="color:#34d399;">{{ stats.resolved }}</div>
+      <div class="stat-label">Resolved / Closed</div>
+    </div>
+  </div>
+</div>
+
+<!-- Expandable Analytics Dashboard -->
+<div id="analytics-section" class="card" style="display:none; margin-bottom:24px; border:1px solid #3b82f6; background:rgba(17,24,39,0.95);">
+  <div class="card-header">
+    <h3 class="card-title">
+      <i class="fa-solid fa-chart-pie" style="color:#60a5fa;"></i> Multi-Agency Incident Analytics & Emergency Breakdown
+    </h3>
+    <button type="button" id="close-analytics-btn" class="btn btn-secondary btn-sm">&times; Close</button>
+  </div>
+  <div class="grid-2">
+    <div style="background:rgba(15,23,42,0.6); padding:16px; border-radius:var(--radius-md); text-align:center;">
+      <h4 style="font-size:0.95rem; color:#93c5fd; margin-bottom:12px;">Disaster Type Distribution</h4>
+      <div style="height:220px; position:relative;">
+        <canvas id="typeChart"></canvas>
+      </div>
+    </div>
+    <div style="background:rgba(15,23,42,0.6); padding:16px; border-radius:var(--radius-md); text-align:center;">
+      <h4 style="font-size:0.95rem; color:#f87171; margin-bottom:12px;">Urgency & Threat Level Ratio</h4>
+      <div style="height:220px; position:relative;">
+        <canvas id="urgencyChart"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Main Command View: Map & Agency Resources -->
+<div class="grid-3" style="grid-template-columns: 2fr 1fr; margin-bottom: 24px;">
+  
+  <!-- Interactive Emergency Map -->
+  <div class="card" style="margin-bottom:0;">
+    <div class="card-header">
+      <h3 class="card-title">
+        <i class="fa-solid fa-map-location-dot" style="color:#34d399;"></i> Geospatial Incident Map
+      </h3>
+      <div style="font-size:0.8rem; color:var(--text-muted); display:flex; gap:10px; align-items:center;">
+        <span><i class="fa-solid fa-circle" style="color:#ef4444;"></i> SOS/Critical</span>
+        <span><i class="fa-solid fa-circle" style="color:#3b82f6;"></i> Flood</span>
+        <span><i class="fa-solid fa-circle" style="color:#f59e0b;"></i> Fire</span>
+        <span><i class="fa-solid fa-circle" style="color:#8b5cf6;"></i> Accident</span>
+      </div>
+    </div>
+    <div id="map-container"></div>
+  </div>
+
+  <!-- Agency Resource Readiness Board Mini -->
+  <div class="card" style="margin-bottom:0;">
+    <div class="card-header">
+      <h3 class="card-title">
+        <i class="fa-solid fa-truck-droplet" style="color:#f59e0b;"></i> Agency Assets
+      </h3>
+      <a href="{{ url_for('resources_page') }}" class="btn btn-secondary btn-sm">Full Board</a>
+    </div>
+
+    <div style="display:flex; flex-direction:column; gap:14px;" id="agency-mini-list">
+      <!-- Police -->
+      <div style="background:rgba(15,23,42,0.6); padding:12px; border-radius:var(--radius-sm); border-left:3px solid #3b82f6;">
+        <div style="display:flex; justify-content:space-between; font-size:0.85rem; font-weight:700;">
+          <span><i class="fa-solid fa-shield-halved" style="color:#3b82f6;"></i> Police Department</span>
+          <span style="color:#60a5fa;">8 / 10 Units Ready</span>
+        </div>
+        <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">Patrol cars, traffic cordons, perimeter squads</div>
+      </div>
+
+      <!-- Fire -->
+      <div style="background:rgba(15,23,42,0.6); padding:12px; border-radius:var(--radius-sm); border-left:3px solid #ef4444;">
+        <div style="display:flex; justify-content:space-between; font-size:0.85rem; font-weight:700;">
+          <span><i class="fa-solid fa-fire-extinguisher" style="color:#ef4444;"></i> Fire & Rescue Dept</span>
+          <span style="color:#f87171;">5 / 6 Tenders Ready</span>
+        </div>
+        <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">Heavy tenders, aerial ladder, rescue cutters</div>
+      </div>
+
+      <!-- Medical -->
+      <div style="background:rgba(15,23,42,0.6); padding:12px; border-radius:var(--radius-sm); border-left:3px solid #10b981;">
+        <div style="display:flex; justify-content:space-between; font-size:0.85rem; font-weight:700;">
+          <span><i class="fa-solid fa-truck-medical" style="color:#10b981;"></i> Hospital & EMS</span>
+          <span style="color:#34d399;">14 / 20 ICU Beds Free</span>
+        </div>
+        <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">ALS/BLS ambulances, trauma surgical teams</div>
+      </div>
+
+      <!-- NDRF / Rescue -->
+      <div style="background:rgba(15,23,42,0.6); padding:12px; border-radius:var(--radius-sm); border-left:3px solid #f59e0b;">
+        <div style="display:flex; justify-content:space-between; font-size:0.85rem; font-weight:700;">
+          <span><i class="fa-solid fa-life-ring" style="color:#f59e0b;"></i> NDRF / Disaster Teams</span>
+          <span style="color:#fbbf24;">4 / 6 Boats Active</span>
+        </div>
+        <div style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">Inflatable rescue boats, acoustic search kits</div>
+      </div>
+    </div>
+
+    <!-- DB Mode Indicator -->
+    <div style="margin-top:16px; padding:8px 12px; background:rgba(255,255,255,0.03); border-radius:var(--radius-sm); font-size:0.75rem; color:var(--text-dim); text-align:center;">
+      <i class="fa-solid fa-database"></i> Storage Engine: <strong>{{ db_type }}</strong>
+    </div>
+  </div>
+
+</div>
+
+<!-- 5-Agent Multi-Agent System Operational Overview Strip (Req 1, 8, 9, 19) -->
+<div class="card" style="margin-bottom: 24px; border: 1px solid rgba(139, 92, 246, 0.3); background: linear-gradient(180deg, rgba(139, 92, 246, 0.08) 0%, rgba(15, 23, 42, 0.8) 100%);">
+  <div class="card-header" style="flex-wrap:wrap; gap:12px; border-bottom: 1px solid rgba(139, 92, 246, 0.2);">
+    <div>
+      <h3 class="card-title" style="display:flex; align-items:center; gap:8px;">
+        <i class="fa-solid fa-brain" style="color:#8b5cf6;"></i> Autonomous Multi-Agent AI Response System
+      </h3>
+      <p style="font-size:0.8rem; color:var(--text-muted); margin-top:2px;">
+        5 specialized AI agents run autonomously upon intake: Coordinator orchestrates, while Police, Fire, Medical, and Rescue agents formulate specialized dispatches.
+      </p>
+    </div>
+    <div style="display:flex; gap:8px; align-items:center;">
+      <span class="badge" style="background:rgba(16,185,129,0.2); color:#34d399; font-size:0.75rem;">
+        <i class="fa-solid fa-circle-nodes"></i> Auto-Pipeline Active
+      </span>
+      <span class="badge" style="background:rgba(139,92,246,0.2); color:#c084fc; font-size:0.75rem;">
+        <i class="fa-solid fa-microchip"></i> Multi-Threaded
+      </span>
+    </div>
+  </div>
+
+  <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:12px; padding:4px 0;">
+    <!-- Agent 1: Coordinator -->
+    <div style="background:rgba(15,23,42,0.7); border:1px solid rgba(139,92,246,0.3); border-radius:8px; padding:12px; border-left:4px solid #8b5cf6;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+        <span style="font-weight:700; color:#fff; font-size:0.88rem; display:flex; align-items:center; gap:6px;">
+          <i class="fa-solid fa-network-wired" style="color:#8b5cf6;"></i> 1. Coordinator
+        </span>
+        <span class="badge" style="background:rgba(16,185,129,0.2); color:#34d399; font-size:0.65rem;">Active</span>
+      </div>
+      <div style="font-size:0.75rem; color:var(--text-dim); line-height:1.4;">
+        Computes urgency (0-100), detects duplicates & synthesizes unified dispatch plan.
+      </div>
+    </div>
+
+    <!-- Agent 2: Police -->
+    <div style="background:rgba(15,23,42,0.7); border:1px solid rgba(59,130,246,0.3); border-radius:8px; padding:12px; border-left:4px solid #3b82f6;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+        <span style="font-weight:700; color:#fff; font-size:0.88rem; display:flex; align-items:center; gap:6px;">
+          <i class="fa-solid fa-shield-halved" style="color:#3b82f6;"></i> 2. Police Agent
+        </span>
+        <span class="badge" style="background:rgba(16,185,129,0.2); color:#34d399; font-size:0.65rem;">Active</span>
+      </div>
+      <div style="font-size:0.75rem; color:var(--text-dim); line-height:1.4;">
+        Perimeter cordon, evacuation corridors & route traffic management.
+      </div>
+    </div>
+
+    <!-- Agent 3: Fire -->
+    <div style="background:rgba(15,23,42,0.7); border:1px solid rgba(239,68,68,0.3); border-radius:8px; padding:12px; border-left:4px solid #ef4444;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+        <span style="font-weight:700; color:#fff; font-size:0.88rem; display:flex; align-items:center; gap:6px;">
+          <i class="fa-solid fa-fire-extinguisher" style="color:#ef4444;"></i> 3. Fire Agent
+        </span>
+        <span class="badge" style="background:rgba(16,185,129,0.2); color:#34d399; font-size:0.65rem;">Active</span>
+      </div>
+      <div style="font-size:0.75rem; color:var(--text-dim); line-height:1.4;">
+        Containment, trapped citizen search, aerial ladders & hazmat assessment.
+      </div>
+    </div>
+
+    <!-- Agent 4: Medical -->
+    <div style="background:rgba(15,23,42,0.7); border:1px solid rgba(16,185,129,0.3); border-radius:8px; padding:12px; border-left:4px solid #10b981;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+        <span style="font-weight:700; color:#fff; font-size:0.88rem; display:flex; align-items:center; gap:6px;">
+          <i class="fa-solid fa-truck-medical" style="color:#10b981;"></i> 4. Medical Agent
+        </span>
+        <span class="badge" style="background:rgba(16,185,129,0.2); color:#34d399; font-size:0.65rem;">Active</span>
+      </div>
+      <div style="font-size:0.75rem; color:var(--text-dim); line-height:1.4;">
+        Casualty triage (Red/Yellow/Green), ALS/BLS ambulances & ICU bed reserves.
+      </div>
+    </div>
+
+    <!-- Agent 5: Rescue & Resources -->
+    <div style="background:rgba(15,23,42,0.7); border:1px solid rgba(245,158,11,0.3); border-radius:8px; padding:12px; border-left:4px solid #f59e0b;">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+        <span style="font-weight:700; color:#fff; font-size:0.88rem; display:flex; align-items:center; gap:6px;">
+          <i class="fa-solid fa-life-ring" style="color:#f59e0b;"></i> 5. Rescue Agent
+        </span>
+        <span class="badge" style="background:rgba(16,185,129,0.2); color:#34d399; font-size:0.65rem;">Active</span>
+      </div>
+      <div style="font-size:0.75rem; color:var(--text-dim); line-height:1.4;">
+        NDRF battalion mobilization, rescue boats, equipment matching & shortages.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Incident Management Table & Filters -->
+<div class="card">
+  <div class="card-header" style="flex-wrap:wrap; gap:12px;">
+    <h3 class="card-title">
+      <i class="fa-solid fa-list-check" style="color:#60a5fa;"></i> Active Incident Triage & Coordination Feed
+    </h3>
+    
+    <!-- Filter Tabs -->
+    <div style="display:flex; gap:6px; flex-wrap:wrap;" id="filter-tabs">
+      <button class="btn btn-secondary btn-sm active" data-filter="all">All</button>
+      <button class="btn btn-secondary btn-sm" data-filter="critical" style="color:#f87171;"><i class="fa-solid fa-triangle-exclamation"></i> Critical / SOS</button>
+      <button class="btn btn-secondary btn-sm" data-filter="Flood">Floods</button>
+      <button class="btn btn-secondary btn-sm" data-filter="Fire">Fires</button>
+      <button class="btn btn-secondary btn-sm" data-filter="Accident">Accidents</button>
+      <button class="btn btn-secondary btn-sm" data-filter="In Progress">In Progress</button>
+      <button class="btn btn-secondary btn-sm" data-filter="Resolved">Resolved</button>
+    </div>
+  </div>
+
+  <!-- Search & Quick Sort -->
+  <div style="margin-bottom:16px; display:flex; gap:12px;">
+    <div style="position:relative; flex:1;">
+      <i class="fa-solid fa-magnifying-glass" style="position:absolute; left:12px; top:12px; color:var(--text-dim);"></i>
+      <input type="text" id="incident-search-input" class="form-control" style="padding-left:36px;" placeholder="Search incidents by code, location address, landmark, or description keyword...">
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="custom-table" id="incidents-table">
+      <thead>
+        <tr>
+          <th>Incident Code</th>
+          <th>Disaster Type</th>
+          <th>Location & Landmark</th>
+          <th>People / Trapped</th>
+          <th>AI Urgency Score</th>
+          <th>Status Update (Officer)</th>
+          <th>Multi-Agent Actions</th>
+        </tr>
+      </thead>
+      <tbody id="incidents-table-body">
+        <tr>
+          <td colspan="7" style="text-align:center; padding:30px; color:var(--text-muted);">
+            <i class="fa-solid fa-spinner fa-spin" style="font-size:1.5rem; margin-bottom:8px; display:block;"></i>
+            Loading live emergency reports...
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Test Email Diagnostic Modal (Req 9) -->
+<div id="test-email-modal" class="modal-overlay">
+  <div class="modal-content" style="max-width: 560px; border: 2px solid #38bdf8;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; border-bottom:1px solid var(--border-color); padding-bottom:10px;">
+      <h3 style="margin:0; font-size:1.15rem; color:#fff; display:flex; align-items:center; gap:8px;">
+        <i class="fa-solid fa-envelope-circle-check" style="color:#38bdf8;"></i> SMTP Email Gateway Diagnostic Test
+      </h3>
+      <button type="button" id="test-email-modal-close" style="background:none; border:none; color:var(--text-dim); font-size:1.4rem; cursor:pointer;">&times;</button>
+    </div>
+
+    <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:16px;">
+      Transmit an instant diagnostic verification email through the configured Python SMTP gateway to confirm live connection to emergency response officers.
+    </p>
+
+    <div style="background:rgba(15,23,42,0.8); border:1px solid var(--border-color); border-radius:6px; padding:12px; margin-bottom:16px; font-size:0.82rem;">
+      <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+        <span style="color:var(--text-dim);">Configured SMTP Server:</span>
+        <strong style="color:#93c5fd; font-family:monospace;">{{ config.SMTP_SERVER or 'smtp.gmail.com' }}:{{ config.SMTP_PORT or 587 }}</strong>
+      </div>
+      <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+        <span style="color:var(--text-dim);">TLS Encryption:</span>
+        <span class="badge" style="background:rgba(16,185,129,0.2); color:#34d399; font-size:0.7rem;">STARTTLS Active</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+        <span style="color:var(--text-dim);">Sender Gmail Account:</span>
+        <strong style="color:#60a5fa; font-family:monospace; font-size:0.78rem;">{{ config.GMAIL_USER or 'Not Configured — set GMAIL_USER in .env' }}</strong>
+      </div>
+      <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+        <span style="color:var(--text-dim);">App Password:</span>
+        {% if config.GMAIL_APP_PASSWORD %}
+          <span class="badge" style="background:rgba(16,185,129,0.2); color:#34d399; font-size:0.7rem;">✅ Configured ({{ config.GMAIL_APP_PASSWORD[:4] }}****)</span>
+        {% else %}
+          <span class="badge" style="background:rgba(239,68,68,0.2); color:#f87171; font-size:0.7rem;">❌ Not Set</span>
+        {% endif %}
+      </div>
+      <div style="display:flex; justify-content:space-between;">
+        <span style="color:var(--text-dim);">Default Officer Recipient:</span>
+        <span style="color:#cbd5e1; font-family:monospace; font-size:0.78rem;">{{ config.OFFICER_EMAILS or 'officer.emergency@disastersync.ai' }}</span>
+      </div>
+    </div>
+
+    <div class="form-group" style="margin-bottom:16px;">
+      <label class="form-label" style="font-size:0.85rem;" for="test-email-target-input">
+        Target Recipient Email Address:
+      </label>
+      <input type="email" id="test-email-target-input" class="form-control" placeholder="e.g. your-email@gmail.com" value="{{ config.OFFICER_EMAILS.split(',')[0].strip() if config.OFFICER_EMAILS else 'officer.emergency@disastersync.ai' }}">
+      <div style="font-size:0.75rem; color:var(--text-dim); margin-top:4px;">
+        Enter any authorized email or your personal address to receive this diagnostic alert.
+      </div>
+    </div>
+
+    <!-- Live Test Result Banner -->
+    <div id="test-email-result-banner" style="display:none; padding:12px; border-radius:6px; margin-bottom:16px; font-size:0.85rem;">
+      <div style="font-weight:bold; display:flex; align-items:center; gap:6px;" id="test-email-result-title"></div>
+      <div style="font-size:0.8rem; margin-top:4px;" id="test-email-result-details"></div>
+    </div>
+
+    <!-- Gmail App Password Setup Guide (Telugu / English) -->
+    <details id="gmail-setup-guide" style="margin-bottom:16px; border:1px solid rgba(56,189,248,0.3); border-radius:8px; overflow:hidden;">
+      <summary style="padding:10px 14px; background:rgba(56,189,248,0.08); cursor:pointer; font-size:0.85rem; font-weight:600; color:#38bdf8; display:flex; align-items:center; gap:8px; list-style:none; user-select:none;">
+        <i class="fa-solid fa-circle-info"></i>
+        📧 Gmail App Password Setup Guide &nbsp;<span style="font-size:0.75rem; color:var(--text-dim); font-weight:400;">(email work avvakapothe idi చూడండి)</span>
+        <i class="fa-solid fa-chevron-down" style="margin-left:auto; font-size:0.7rem; opacity:0.7;"></i>
+      </summary>
+      <div style="padding:14px 16px; background:rgba(15,23,42,0.6); font-size:0.82rem; line-height:1.75;">
+
+        <!-- Step 1 -->
+        <div style="display:flex; gap:10px; margin-bottom:12px; align-items:flex-start;">
+          <span style="background:rgba(56,189,248,0.2); color:#38bdf8; border-radius:50%; width:22px; height:22px; display:flex; align-items:center; justify-content:center; font-size:0.75rem; font-weight:700; flex-shrink:0; margin-top:1px;">1</span>
+          <div>
+            <div style="color:#e2e8f0; font-weight:600; margin-bottom:2px;">2-Step Verification Enable చేయండి</div>
+            <div style="color:var(--text-dim);">Mee Gmail account lo 2-Step Verification enable cheyyali (mandatory).</div>
+            <a href="https://myaccount.google.com/security" target="_blank" rel="noopener" style="color:#38bdf8; text-decoration:none; font-size:0.78rem;">
+              👉 myaccount.google.com/security <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.65rem;"></i>
+            </a>
+          </div>
+        </div>
+
+        <!-- Step 2 -->
+        <div style="display:flex; gap:10px; margin-bottom:12px; align-items:flex-start;">
+          <span style="background:rgba(56,189,248,0.2); color:#38bdf8; border-radius:50%; width:22px; height:22px; display:flex; align-items:center; justify-content:center; font-size:0.75rem; font-weight:700; flex-shrink:0; margin-top:1px;">2</span>
+          <div>
+            <div style="color:#e2e8f0; font-weight:600; margin-bottom:2px;">App Passwords Open చేయండి</div>
+            <div style="color:var(--text-dim);">Security page lo "App Passwords" option select cheyyandi.</div>
+            <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener" style="color:#38bdf8; text-decoration:none; font-size:0.78rem;">
+              👉 myaccount.google.com/apppasswords <i class="fa-solid fa-arrow-up-right-from-square" style="font-size:0.65rem;"></i>
+            </a>
+          </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div style="display:flex; gap:10px; margin-bottom:12px; align-items:flex-start;">
+          <span style="background:rgba(56,189,248,0.2); color:#38bdf8; border-radius:50%; width:22px; height:22px; display:flex; align-items:center; justify-content:center; font-size:0.75rem; font-weight:700; flex-shrink:0; margin-top:1px;">3</span>
+          <div>
+            <div style="color:#e2e8f0; font-weight:600; margin-bottom:2px;">App Password Generate చేయండి</div>
+            <div style="color:var(--text-dim);">"Mail" → "Windows Computer" select chesi "Generate" click cheyyandi. Google generate chesina 16-character password ni copy cheyyandi.</div>
+          </div>
+        </div>
+
+        <!-- Step 4 -->
+        <div style="display:flex; gap:10px; margin-bottom:14px; align-items:flex-start;">
+          <span style="background:rgba(56,189,248,0.2); color:#38bdf8; border-radius:50%; width:22px; height:22px; display:flex; align-items:center; justify-content:center; font-size:0.75rem; font-weight:700; flex-shrink:0; margin-top:1px;">4</span>
+          <div style="width:100%;">
+            <div style="color:#e2e8f0; font-weight:600; margin-bottom:4px;">.env File Lo Securely Store చేయండి</div>
+            <div style="color:var(--text-dim); margin-bottom:6px;">Project root lo <code style="color:#a5f3fc; background:rgba(0,0,0,0.3); padding:1px 5px; border-radius:3px;">.env</code> file open chesi below values fill cheyyandi:</div>
+            <pre style="background:rgba(0,0,0,0.5); border:1px solid rgba(56,189,248,0.25); border-radius:6px; padding:10px; font-size:0.76rem; color:#a5f3fc; margin:0; overflow-x:auto; line-height:1.6;"><code>GMAIL_USER=yourgmail@gmail.com
+GMAIL_APP_PASSWORD=xxxx xxxx xxxx xxxx</code></pre>
+            <div style="font-size:0.73rem; color:#94a3b8; margin-top:4px; font-style:italic;">(Example only – actual password kaadu. Real credentials use cheyyandi.)</div>
+          </div>
+        </div>
+
+        <!-- Warning -->
+        <div style="background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.35); border-radius:6px; padding:10px 12px; display:flex; align-items:flex-start; gap:8px;">
+          <i class="fa-solid fa-triangle-exclamation" style="color:#f87171; margin-top:1px; flex-shrink:0;"></i>
+          <div>
+            <div style="color:#fca5a5; font-weight:600; font-size:0.82rem;">⚠️ Security Warning</div>
+            <div style="color:#fca5a5; font-size:0.78rem; margin-top:2px;">
+              Actual password ni ikkada share cheyyakandi! Real credentials ni GitHub/GitLab lo commit cheyyakandi. <code style="background:rgba(0,0,0,0.3); padding:1px 4px; border-radius:3px;">.env</code> file ni <code style="background:rgba(0,0,0,0.3); padding:1px 4px; border-radius:3px;">.gitignore</code> lo add cheyyandi.
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </details>
+    <!-- End Gmail Setup Guide -->
+
+    <div style="display:flex; justify-content:flex-end; gap:10px;">
+      <button type="button" id="test-email-cancel-btn" class="btn btn-secondary btn-sm">Close</button>
+      <button type="button" id="btn-execute-test-email" class="btn btn-primary btn-sm" style="box-shadow: 0 0 10px rgba(56,189,248,0.4);">
+        <i class="fa-solid fa-paper-plane"></i> Send Test Email
+      </button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/map.js') }}"></script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}
+

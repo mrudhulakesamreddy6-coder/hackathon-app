@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block title %}Citizen Emergency Incident Tracking - {{ project_name }}{% endblock %}
+
+{% block content %}
+<div style="max-width: 900px; margin: 0 auto; padding: 10px 0;">
+
+  <!-- Header -->
+  <div style="text-align: center; margin-bottom: 24px;">
+    <span class="badge" style="background: rgba(99,102,241,0.2); color: #818cf8; font-size: 0.8rem; margin-bottom: 8px;">
+      <i class="fa-solid fa-location-crosshairs"></i> Official Citizen Tracking Portal
+    </span>
+    <h1 style="font-size: 1.9rem; font-weight: 800; color: #fff; margin: 8px 0;">
+      Emergency Incident Status & Live Dispatch Tracking
+    </h1>
+    <p style="color: var(--text-muted); font-size: 0.92rem; max-width: 640px; margin: 0 auto;">
+      Enter your incident tracking ID to verify real-time response agency readiness, emergency triage status, and safety guidance.
+    </p>
+  </div>
+
+  <!-- Search Card -->
+  <div class="card" style="margin-bottom: 24px; border: 1px solid rgba(99,102,241,0.3); background: rgba(17,24,39,0.85);">
+    <form id="track-form" onsubmit="handleTrackSearch(event)" style="display:flex; gap:10px; flex-wrap:wrap;">
+      <div style="flex:1; min-width:240px; position:relative;">
+        <i class="fa-solid fa-hashtag" style="position:absolute; left:14px; top:14px; color:var(--text-dim);"></i>
+        <input type="text" id="track-input" class="form-control" style="padding-left:38px; font-family:monospace; font-size:1rem; text-transform:uppercase;"
+               placeholder="e.g. INC-2026-8421" value="{{ initial_code or '' }}" required>
+      </div>
+      <button type="submit" class="btn btn-primary" id="track-submit-btn" style="padding:10px 24px;">
+        <i class="fa-solid fa-magnifying-glass"></i> Track Report
+      </button>
+    </form>
+  </div>
+
+  <!-- Results Container -->
+  <div id="track-result-container">
+    {% if incident %}
+      <!-- Pre-rendered Incident Info from server -->
+      {% include "track_result_partial.html" %}
+    {% else %}
+      <div id="track-empty-state" style="text-align:center; padding:40px 20px; background:rgba(15,23,42,0.6); border:1px dashed var(--border-color); border-radius:12px;">
+        <i class="fa-solid fa-satellite-dish" style="font-size:2.5rem; color:#6366f1; margin-bottom:12px; display:block;"></i>
+        <h3 style="color:#fff; font-size:1.15rem; margin-bottom:6px;">Ready to Track Your Emergency Report</h3>
+        <p style="color:var(--text-muted); font-size:0.85rem; max-width:440px; margin:0 auto;">
+          Enter the tracking ID from your confirmation email or on-screen receipt to inspect live agency dispatches.
+        </p>
+      </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+async function handleTrackSearch(e) {
+  if (e) e.preventDefault();
+  const input = document.getElementById('track-input');
+  const code = (input.value || '').trim().toUpperCase();
+  if (!code) return;
+
+  const btn = document.getElementById('track-submit-btn');
+  const container = document.getElementById('track-result-container');
+  btn.disabled = true;
+  btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Searching...`;
+
+  try {
+    const res = await fetch(`/api/track/${code}`);
+    const data = await res.json();
+    if (!data.success || !data.incident) {
+      container.innerHTML = `
+        <div class="card" style="border-left:4px solid #ef4444; background:rgba(239,68,68,0.08); padding:24px; text-align:center;">
+          <i class="fa-solid fa-circle-exclamation" style="font-size:2rem; color:#f87171; margin-bottom:8px;"></i>
+          <h3 style="color:#f87171; font-size:1.1rem; margin-bottom:4px;">Tracking ID Not Found</h3>
+          <p style="color:#cbd5e1; font-size:0.88rem;">No incident report matches code <strong>${code}</strong>. Please check your confirmation email and try again.</p>
+        </div>`;
+      return;
+    }
+
+    renderTrackingData(data);
+    window.history.pushState({}, '', `/track/${code}`);
+  } catch (err) {
+    container.innerHTML = `<div class="card" style="color:#f87171; text-align:center;">Network error querying tracking status: ${err.message}</div>`;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<i class="fa-solid fa-magnifying-glass"></i> Track Report`;
+  }
+}
+
+function renderTrackingData(data) {
+  const inc = data.incident;
+  const alerts = data.alerts || [];
+  const container = document.getElementById('track-result-container');
+
+  // Urgency styling
+  let urgencyColor = '#3b82f6';
+  if (inc.urgency_level === 'CRITICAL') urgencyColor = '#ef4444';
+  else if (inc.urgency_level === 'HIGH') urgencyColor = '#f97316';
+  else if (inc.urgency_level === 'MEDIUM') urgencyColor = '#eab308';
+
+  // Status progression
+  const statuses = ['Reported', 'Verified', 'Dispatched', 'In Progress', 'Resolved'];
+  const currentIndex = statuses.indexOf(inc.status);
+
+  container.innerHTML = `
+    <div class="card" style="border-top:4px solid ${urgencyColor}; margin-bottom:20px;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:16px; border-bottom:1px solid var(--border-color); padding-bottom:14px;">
+        <div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <h2 style="color:#fff; margin:0; font-family:monospace; font-size:1.4rem;">${inc.incident_code}</h2>
+            <span class="badge" style="background:${urgencyColor}22; color:${urgencyColor}; border:1px solid ${urgencyColor}66;">
+              ${inc.urgency_level} PRIORITY
+            </span>
+            ${inc.is_sos ? `<span class="badge badge-sos">SOS TRIGGER</span>` : ''}
+          </div>
+          <div style="color:#94a3b8; font-size:0.85rem; margin-top:4px;">
+            Reported: ${inc.reported_at || 'Just now'} &bull; Type: <strong>${inc.emergency_type}</strong>
+          </div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:0.75rem; color:var(--text-dim); text-transform:uppercase; font-weight:bold;">Current Status</div>
+          <div style="font-size:1.1rem; font-weight:800; color:#34d399;">${inc.status}</div>
+        </div>
+      </div>
+
+      <!-- Lifecycle Progress Timeline -->
+      <div style="margin:20px 0 24px 0;">
+        <div style="display:flex; justify-content:space-between; position:relative; margin-bottom:8px;">
+          <div style="position:absolute; top:12px; left:5%; right:5%; height:3px; background:rgba(255,255,255,0.1); z-index:1;"></div>
+          ${statuses.map((s, idx) => {
+            const isCompleted = idx <= currentIndex;
+            const isCurrent = idx === currentIndex;
+            const circleColor = isCurrent ? '#38bdf8' : (isCompleted ? '#10b981' : 'rgba(255,255,255,0.2)');
+            return `
+              <div style="text-align:center; z-index:2; flex:1;">
+                <div style="width:26px; height:26px; border-radius:50%; background:${isCompleted ? circleColor : '#1f2937'}; border:2px solid ${circleColor}; margin:0 auto; display:flex; align-items:center; justify-content:center; color:#fff; font-size:0.75rem; font-weight:bold;">
+                  ${isCompleted ? '✓' : idx+1}
+                </div>
+                <div style="font-size:0.72rem; margin-top:6px; color:${isCompleted ? '#fff' : 'var(--text-dim)'}; font-weight:${isCurrent ? 'bold' : 'normal'};">
+                  ${s}
+                </div>
+              </div>`;
+          }).join('')}
+        </div>
+      </div>
+
+      <!-- Incident Details Grid -->
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:12px; margin-bottom:16px; background:rgba(15,23,42,0.6); padding:14px; border-radius:8px;">
+        <div>
+          <div style="font-size:0.75rem; color:var(--text-dim);">LOCATION</div>
+          <div style="color:#fff; font-size:0.9rem; font-weight:600;"><i class="fa-solid fa-location-dot" style="color:#ef4444;"></i> ${inc.location_address}</div>
+        </div>
+        <div>
+          <div style="font-size:0.75rem; color:var(--text-dim);">INCIDENT TITLE</div>
+          <div style="color:#fff; font-size:0.9rem; font-weight:600;">${inc.title}</div>
+        </div>
+        <div>
+          <div style="font-size:0.75rem; color:var(--text-dim);">EMERGENCY TYPE</div>
+          <div style="color:#fff; font-size:0.9rem; font-weight:600;">${inc.emergency_type}</div>
+        </div>
+      </div>
+
+      <!-- Human Safety Notice -->
+      <div style="background:rgba(59,130,246,0.1); border-left:4px solid #3b82f6; padding:12px 14px; border-radius:6px; font-size:0.82rem; color:#bfdbfe; margin-bottom:16px;">
+        <i class="fa-solid fa-circle-info"></i> <strong>Safety Protocol:</strong> Autonomous AI triage complete. Field dispatches require active human authorization by duty commanders. If in immediate life-threatening danger, take safe shelter and follow official directives.
+      </div>
+
+      <!-- Simulated Agency Alerts Readiness -->
+      ${alerts.length > 0 ? `
+        <div style="margin-top:16px;">
+          <h4 style="color:#fff; font-size:0.9rem; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+            <i class="fa-solid fa-shield-halved" style="color:#10b981;"></i> Multi-Agency Response Status
+          </h4>
+          <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:8px;">
+            ${alerts.map(a => `
+              <div style="background:rgba(15,23,42,0.8); border:1px solid var(--border-color); border-radius:6px; padding:10px;">
+                <div style="color:#fff; font-size:0.85rem; font-weight:600;">${a.agency_name}</div>
+                <div style="font-size:0.72rem; color:var(--text-dim); margin-top:2px;">Channel: ${a.alert_channel}</div>
+                <div style="margin-top:6px;"><span class="badge" style="font-size:0.7rem; background:rgba(59,130,246,0.2); color:#60a5fa;">${a.status}</span></div>
+              </div>`).join('')}
+          </div>
+        </div>` : ''}
+
+    </div>`;
+}
+
+// Auto-run search if pre-filled
+document.addEventListener('DOMContentLoaded', () => {
+  const input = document.getElementById('track-input');
+  if (input && input.value.trim()) {
+    handleTrackSearch();
+  }
+});
+</script>
+{% endblock %}
+

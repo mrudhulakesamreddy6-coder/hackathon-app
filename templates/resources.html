@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}Agency Resource Board - {{ project_name }}{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 24px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px;">
+  <div>
+    <h1 style="font-size: 1.8rem; font-weight: 800; color: #fff; display:flex; align-items:center; gap:12px;">
+      <i class="fa-solid fa-truck-droplet" style="color:#f59e0b;"></i> Agency Resource & Asset Inventory
+    </h1>
+    <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 4px;">
+      Live tracking of vehicles, search-and-rescue boats, ICU hospital beds, and emergency tactical squads.
+    </p>
+  </div>
+  <a href="{{ url_for('dashboard_page') }}" class="btn btn-secondary btn-sm">
+    <i class="fa-solid fa-chart-line"></i> Command Center
+  </a>
+</div>
+
+<!-- Agency Filters / Summary -->
+<div class="grid-4" style="margin-bottom: 24px;">
+  <div class="stat-card" style="border-left:4px solid #3b82f6;">
+    <div>
+      <div style="font-weight:700; color:#fff;">Police Fleet</div>
+      <div style="font-size:0.85rem; color:var(--text-muted);">Patrol cars, cordon squads</div>
+    </div>
+  </div>
+
+  <div class="stat-card" style="border-left:4px solid #ef4444;">
+    <div>
+      <div style="font-weight:700; color:#fff;">Fire & Rescue</div>
+      <div style="font-size:0.85rem; color:var(--text-muted);">Water tenders, aerial ladders</div>
+    </div>
+  </div>
+
+  <div class="stat-card" style="border-left:4px solid #10b981;">
+    <div>
+      <div style="font-weight:700; color:#fff;">Medical & Hospital</div>
+      <div style="font-size:0.85rem; color:var(--text-muted);">ALS ambulances, ICU beds</div>
+    </div>
+  </div>
+
+  <div class="stat-card" style="border-left:4px solid #f59e0b;">
+    <div>
+      <div style="font-weight:700; color:#fff;">NDRF / Disaster</div>
+      <div style="font-size:0.85rem; color:var(--text-muted);">Inflatable boats, USAR teams</div>
+    </div>
+  </div>
+</div>
+
+<!-- Resource Items Table -->
+<div class="card">
+  <div class="card-header">
+    <h3 class="card-title">
+      <i class="fa-solid fa-boxes-stacked" style="color:#60a5fa;"></i> Active Resource Catalog
+    </h3>
+    <span style="font-size:0.8rem; color:var(--text-muted);">Managed by Resource Coordination Agent</span>
+  </div>
+
+  <div class="table-responsive">
+    <table class="custom-table">
+      <thead>
+        <tr>
+          <th>Agency</th>
+          <th>Resource Name</th>
+          <th>Type</th>
+          <th>Base Location</th>
+          <th>Available / Total</th>
+          <th>Status</th>
+          <th>Quick Adjust</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for res in resources %}
+        <tr>
+          <td>
+            {% if res.agency_id == 'police' %}
+              <span class="badge" style="background:rgba(59,130,246,0.2); color:#60a5fa;"><i class="fa-solid fa-shield-halved"></i> Police</span>
+            {% elif res.agency_id == 'fire' %}
+              <span class="badge" style="background:rgba(239,68,68,0.2); color:#f87171;"><i class="fa-solid fa-fire-extinguisher"></i> Fire</span>
+            {% elif res.agency_id == 'medical' %}
+              <span class="badge" style="background:rgba(16,185,129,0.2); color:#34d399;"><i class="fa-solid fa-truck-medical"></i> Medical</span>
+            {% else %}
+              <span class="badge" style="background:rgba(245,158,11,0.2); color:#fbbf24;"><i class="fa-solid fa-life-ring"></i> NDRF</span>
+            {% endif %}
+          </td>
+          <td><strong>{{ res.resource_name }}</strong></td>
+          <td style="color:var(--text-muted);">{{ res.resource_type }}</td>
+          <td>
+            <i class="fa-solid fa-location-pin" style="color:var(--text-dim);"></i> {{ res.base_location }}
+            <div style="font-size:0.75rem; color:var(--text-dim); font-family:monospace;">{{ res.latitude }}, {{ res.longitude }}</div>
+          </td>
+          <td>
+            <strong style="color:{% if res.available_capacity > 0 %}#34d399{% else %}#f87171{% endif %}; font-size:1.05rem;">
+              {{ res.available_capacity }}
+            </strong>
+            <span style="color:var(--text-muted);"> / {{ res.total_capacity }}</span>
+          </td>
+          <td>
+            <span class="badge" style="background:{% if res.status == 'Available' %}rgba(16,185,129,0.2); color:#34d399;{% else %}rgba(245,158,11,0.2); color:#fbbf24;{% endif %}">
+              {{ res.status }}
+            </span>
+          </td>
+          <td>
+            <div style="display:flex; gap:6px;">
+              <button class="btn btn-secondary btn-sm adjust-res-btn" data-res-id="{{ res.id }}" data-avail="{{ res.available_capacity - 1 }}" data-status="{{ res.status }}" title="Decrease Available" {% if res.available_capacity <= 0 %}disabled{% endif %}>
+                <i class="fa-solid fa-minus"></i>
+              </button>
+              <button class="btn btn-secondary btn-sm adjust-res-btn" data-res-id="{{ res.id }}" data-avail="{{ res.available_capacity + 1 }}" data-status="{{ res.status }}" title="Increase Available" {% if res.available_capacity >= res.total_capacity %}disabled{% endif %}>
+                <i class="fa-solid fa-plus"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.querySelectorAll('.adjust-res-btn').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const resId = btn.getAttribute('data-res-id');
+    const newAvail = btn.getAttribute('data-avail');
+    const status = parseInt(newAvail) > 0 ? 'Available' : 'Dispatched';
+
+    try {
+      const resp = await fetch(`/api/resource/${resId}/update`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ available_capacity: newAvail, status: status })
+      });
+      const data = await resp.json();
+      if (data.success) {
+        window.DisasterSync.showToast('Resource updated', 'success');
+        location.reload();
+      }
+    } catch (err) {
+      window.DisasterSync.showToast('Error updating resource', 'danger');
+    }
+  });
+});
+</script>
+{% endblock %}
+

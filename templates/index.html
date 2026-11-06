@@ -1,0 +1,313 @@
+{% extends "base.html" %}
+
+{% block title %}Home - {{ project_name }}{% endblock %}
+
+{% block content %}
+<section class="hero-section">
+  <div style="display:inline-block; margin-bottom:12px;">
+    <span class="badge badge-medium" style="font-size:0.8rem; padding:6px 14px;">
+      <i class="fa-solid fa-microchip"></i> Agentic AI Emergency Coordination &bull; AG-AI-01
+    </span>
+  </div>
+  <h1 class="hero-title">AI-Powered Multi-Agent Disaster Response & Coordination</h1>
+  <p class="hero-subtitle">
+    Rapid emergency intake for floods, fires, earthquakes, and accidents. Intelligent multi-agent triage,
+    spatial duplicate detection, and automated simulated dispatch to Police, Fire, Hospitals, and Rescue.
+  </p>
+
+  <!-- Big SOS Panic Section -->
+  <div class="sos-container" id="sos">
+    <button id="hero-sos-btn" class="sos-big-btn" title="Click to trigger instant emergency distress broadcast">
+      <i class="fa-solid fa-triangle-exclamation"></i>
+      <span>SOS</span>
+      <span class="sos-subtext">1-CLICK EMERGENCY</span>
+    </button>
+    <div style="margin-top:14px; color:var(--text-muted); font-size:0.85rem;">
+      <i class="fa-solid fa-location-crosshairs"></i> Auto-detects GPS location &bull; Prioritizes instant simulated rescue response
+    </div>
+  </div>
+
+  <div style="display:flex; justify-content:center; gap:16px; margin-top:24px; flex-wrap:wrap;">
+    <a href="{{ url_for('report_page') }}" class="btn btn-primary btn-lg">
+      <i class="fa-solid fa-file-pen"></i> Submit Detailed Report
+    </a>
+    <a href="{{ url_for('dashboard_page') }}" class="btn btn-secondary btn-lg">
+      <i class="fa-solid fa-desktop"></i> Open Agency Command Center
+    </a>
+    <button id="load-scenario-btn" class="btn btn-warning btn-lg">
+      <i class="fa-solid fa-wand-magic-sparkles"></i> Load Hackathon Demo Scenario
+    </button>
+  </div>
+</section>
+
+<!-- KPI Stats Section -->
+<div class="grid-4" style="margin-bottom: 30px;">
+  <div class="stat-card">
+    <div class="stat-icon" style="background:rgba(59,130,246,0.15); color:#60a5fa;">
+      <i class="fa-solid fa-bullhorn"></i>
+    </div>
+    <div>
+      <div class="stat-value" id="kpi-total">{{ stats.total }}</div>
+      <div class="stat-label">Total Reports Logged</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon" style="background:rgba(239,68,68,0.15); color:#f87171;">
+      <i class="fa-solid fa-triangle-exclamation"></i>
+    </div>
+    <div>
+      <div class="stat-value" id="kpi-critical" style="color:#f87171;">{{ stats.critical }}</div>
+      <div class="stat-label">Critical / Active SOS</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon" style="background:rgba(245,158,11,0.15); color:#fbbf24;">
+      <i class="fa-solid fa-truck-fast"></i>
+    </div>
+    <div>
+      <div class="stat-value" id="kpi-dispatches" style="color:#fbbf24;">{{ stats.dispatches }}</div>
+      <div class="stat-label">Simulated Dispatches</div>
+    </div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-icon" style="background:rgba(16,185,129,0.15); color:#34d399;">
+      <i class="fa-solid fa-circle-check"></i>
+    </div>
+    <div>
+      <div class="stat-value" id="kpi-resolved" style="color:#34d399;">{{ stats.resolved }}</div>
+      <div class="stat-label">Resolved / Handled</div>
+    </div>
+  </div>
+</div>
+
+<!-- Track Incident Status Section -->
+<div class="card" style="background: rgba(17, 24, 39, 0.6); border: 1px dashed var(--info-blue); padding: 18px 24px; margin-bottom: 30px;">
+  <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px;">
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <div style="width: 44px; height: 44px; border-radius: var(--radius-md); background: rgba(59, 130, 246, 0.15); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; color: #60a5fa;">
+        <i class="fa-solid fa-magnifying-glass-location"></i>
+      </div>
+      <div>
+        <div style="font-weight: 700; font-size: 1.05rem; color: #fff;">Track Emergency Response Status</div>
+        <div style="font-size: 0.8rem; color: var(--text-muted);">Enter your 11-digit incident tracking code (e.g. <code>INC-2026-8602</code>)</div>
+      </div>
+    </div>
+
+    <form id="track-incident-form" style="display: flex; gap: 10px; flex: 1; max-width: 450px;">
+      <input type="text" id="track-code-input" class="form-control" placeholder="Enter Incident ID (e.g. INC-2026-8602)" style="font-family: monospace; font-weight: bold; text-transform: uppercase;" required>
+      <button type="submit" class="btn btn-primary" style="white-space: nowrap;">
+        <i class="fa-solid fa-arrow-right"></i> Track Live
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- Quick Emergency Shortcuts -->
+<div class="card">
+  <div class="card-header">
+    <h2 class="card-title">
+      <i class="fa-solid fa-bolt-lightning" style="color:#f59e0b;"></i> Quick Emergency Reporting Categories
+    </h2>
+    <span style="font-size:0.85rem; color:var(--text-muted);">Select disaster type to launch expedited form</span>
+  </div>
+
+  <div class="grid-4">
+    <a href="{{ url_for('report_page') }}?type=Flood" style="text-decoration:none; color:inherit;">
+      <div class="type-choice-card" style="border-color: rgba(59,130,246,0.4); padding:20px;">
+        <i class="fa-solid fa-house-flood-water" style="color:#60a5fa; font-size:2.2rem;"></i>
+        <div class="type-title" style="font-size:1.05rem; margin-top:8px;">Flood & Waterlogging</div>
+        <p style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">Rising waters, breached canals, trapped residents</p>
+      </div>
+    </a>
+
+    <a href="{{ url_for('report_page') }}?type=Fire" style="text-decoration:none; color:inherit;">
+      <div class="type-choice-card" style="border-color: rgba(239,68,68,0.4); padding:20px;">
+        <i class="fa-solid fa-fire-flame-curved" style="color:#f87171; font-size:2.2rem;"></i>
+        <div class="type-title" style="font-size:1.05rem; margin-top:8px;">Fire & Explosion</div>
+        <p style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">Structural fire, gas leaks, industrial blaze</p>
+      </div>
+    </a>
+
+    <a href="{{ url_for('report_page') }}?type=Accident" style="text-decoration:none; color:inherit;">
+      <div class="type-choice-card" style="border-color: rgba(168,85,247,0.4); padding:20px;">
+        <i class="fa-solid fa-car-burst" style="color:#c084fc; font-size:2.2rem;"></i>
+        <div class="type-title" style="font-size:1.05rem; margin-top:8px;">Highway / Collision</div>
+        <p style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">Multi-vehicle collision, road blockage, casualties</p>
+      </div>
+    </a>
+
+    <a href="{{ url_for('report_page') }}?type=Earthquake" style="text-decoration:none; color:inherit;">
+      <div class="type-choice-card" style="border-color: rgba(245,158,11,0.4); padding:20px;">
+        <i class="fa-solid fa-volcano" style="color:#fbbf24; font-size:2.2rem;"></i>
+        <div class="type-title" style="font-size:1.05rem; margin-top:8px;">Earthquake & Collapse</div>
+        <p style="font-size:0.75rem; color:var(--text-muted); margin-top:4px;">Structural tremors, debris entrapment, landslides</p>
+      </div>
+    </a>
+  </div>
+</div>
+
+<!-- Multi-Agent Coordination Preview -->
+<div class="grid-2">
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">
+        <i class="fa-solid fa-network-wired" style="color:#8b5cf6;"></i> Multi-Agent Architecture
+      </h3>
+      <a href="{{ url_for('docs_page') }}" class="btn btn-secondary btn-sm">Full Specs</a>
+    </div>
+    <div style="font-size:0.88rem; color:var(--text-muted); line-height:1.7;">
+      <div style="margin-bottom:12px; display:flex; gap:10px;">
+        <i class="fa-solid fa-robot" style="color:#8b5cf6; font-size:1.2rem; margin-top:2px;"></i>
+        <div><strong>Coordinator Agent:</strong> Orchestrates the incident pipeline, calculates urgency scores (0-100), and creates response syntheses for human officers.</div>
+      </div>
+      <div style="margin-bottom:12px; display:flex; gap:10px;">
+        <i class="fa-solid fa-copy" style="color:#a855f7; font-size:1.2rem; margin-top:2px;"></i>
+        <div><strong>Duplicate Detection Agent:</strong> Uses spatial Haversine distance (&lt;2km) and semantic similarity to cluster duplicate incoming citizen reports.</div>
+      </div>
+      <div style="margin-bottom:12px; display:flex; gap:10px;">
+        <i class="fa-solid fa-shield-halved" style="color:#3b82f6; font-size:1.2rem; margin-top:2px;"></i>
+        <div><strong>Police Coordination Agent:</strong> Plans 500m perimeters, evacuation corridors, and road blockages.</div>
+      </div>
+      <div style="margin-bottom:12px; display:flex; gap:10px;">
+        <i class="fa-solid fa-fire-extinguisher" style="color:#ef4444; font-size:1.2rem; margin-top:2px;"></i>
+        <div><strong>Fire & Rescue Agent:</strong> Evaluates structural collapse, hydraulic equipment needs, and motorized rescue boats.</div>
+      </div>
+      <div style="margin-bottom:12px; display:flex; gap:10px;">
+        <i class="fa-solid fa-truck-medical" style="color:#10b981; font-size:1.2rem; margin-top:2px;"></i>
+        <div><strong>Medical Assistance Agent:</strong> Conducts mass casualty triage (Red/Yellow/Green) and checks ICU bed capacity.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <h3 class="card-title">
+        <i class="fa-solid fa-clock-rotate-left" style="color:#3b82f6;"></i> Recent Incident Reports
+      </h3>
+      <a href="{{ url_for('dashboard_page') }}" class="btn btn-secondary btn-sm">View All</a>
+    </div>
+
+    <div class="table-responsive">
+      <table class="custom-table">
+        <thead>
+          <tr>
+            <th>Code</th>
+            <th>Type</th>
+            <th>Location</th>
+            <th>Urgency</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for inc in recent_incidents %}
+          <tr>
+            <td>
+              <strong>{{ inc.incident_code }}</strong>
+              {% if inc.is_sos %}
+                <span class="badge badge-sos" style="font-size:0.65rem;">SOS</span>
+              {% endif %}
+              {% if inc.is_duplicate %}
+                <span class="badge badge-duplicate" style="font-size:0.65rem;">DUP</span>
+              {% endif %}
+            </td>
+            <td>{{ inc.emergency_type }}</td>
+            <td style="max-width:180px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+              {{ inc.location_address }}
+            </td>
+            <td>
+              <span class="badge badge-{{ inc.urgency_level.lower() }}">
+                {{ inc.urgency_level }} ({{ inc.urgency_score }})
+              </span>
+            </td>
+            <td>
+              <span style="font-size:0.85rem; font-weight:600; color:var(--text-main);">{{ inc.status }}</span>
+            </td>
+            <td>
+              <a href="{{ url_for('incident_detail_page', incident_id=inc.id) }}" class="btn btn-secondary btn-sm">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i> Details
+              </a>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="6" style="text-align:center; color:var(--text-dim); padding:24px;">
+              No incidents reported yet. Click <strong>"Load Hackathon Demo Scenario"</strong> above to populate test data!
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Instant SOS Modal -->
+<div id="sos-modal" class="modal-overlay">
+  <div class="modal-content" style="border: 2px solid #ef4444;">
+    <div style="text-align:center; margin-bottom:18px;">
+      <div style="width:64px; height:64px; background:#ef4444; border-radius:50%; margin:0 auto 12px; display:flex; align-items:center; justify-content:center; font-size:2rem; box-shadow:0 0 20px rgba(239,68,68,0.7);">
+        <i class="fa-solid fa-triangle-exclamation" style="color:white;"></i>
+      </div>
+      <h2 style="color:#f87171;">URGENT SOS DISTRESS SIGNAL</h2>
+      <p style="font-size:0.85rem; color:var(--text-muted); margin-top:4px;">
+        This will broadcast a top-priority (Urgency Score: 100) distress alert to simulated response units.
+      </p>
+    </div>
+
+    <form id="sos-quick-form">
+      <div class="form-group">
+        <label class="form-label">Detected / Stated Location</label>
+        <input type="text" id="sos-location" class="form-control" value="Acquiring GPS location..." required>
+        <input type="hidden" id="sos-lat" value="15.9054">
+        <input type="hidden" id="sos-lng" value="80.4682">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Nature of Emergency</label>
+        <select id="sos-type" class="form-control">
+          <option value="Critical SOS - Trapped Civilians">Critical SOS - Trapped Civilians</option>
+          <option value="Critical SOS - Flood Inundation">Critical SOS - Flood Inundation</option>
+          <option value="Critical SOS - Fire & Smoke Entrapment">Critical SOS - Fire & Smoke Entrapment</option>
+          <option value="Critical SOS - Severe Medical Trauma">Critical SOS - Severe Medical Trauma</option>
+          <option value="Critical SOS - Structural Collapse">Critical SOS - Structural Collapse</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Estimated People in Danger</label>
+        <input type="number" id="sos-people" class="form-control" value="2" min="1" max="500">
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:20px;">
+        <button type="button" class="btn btn-secondary" id="sos-cancel-btn">Cancel</button>
+        <button type="submit" class="btn btn-danger" id="sos-confirm-btn" style="padding:10px 24px;">
+          <i class="fa-solid fa-tower-broadcast"></i> TRANSMIT SOS NOW
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Track Incident Result Modal -->
+<div id="track-result-modal" class="modal-overlay">
+  <div class="modal-content" style="border: 2px solid #3b82f6;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+      <h3 style="color: #60a5fa; margin: 0; display: flex; align-items: center; gap: 8px;">
+        <i class="fa-solid fa-radar"></i> Emergency Tracking Details
+      </h3>
+      <button type="button" id="track-modal-close" style="background: none; border: none; color: var(--text-muted); font-size: 1.2rem; cursor: pointer;">&times;</button>
+    </div>
+
+    <div id="track-modal-content">
+      <div style="text-align: center; padding: 20px; color: var(--text-muted);">
+        <i class="fa-solid fa-spinner fa-spin"></i> Querying emergency dispatch registry...
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" width="100%" height="100%">
+  <defs>
+    <linearGradient id="dustSky" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#451a03"/>
+      <stop offset="50%" stop-color="#78350f"/>
+      <stop offset="100%" stop-color="#292524"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Dust Cloud Sky -->
+  <rect width="800" height="500" fill="url(#dustSky)"/>
+  
+  <!-- Collapsed/Cracked Concrete Wall -->
+  <polygon points="120,400 120,180 340,160 380,240 330,270 370,400" fill="#78716c"/>
+  <polygon points="370,400 330,270 380,240 520,190 540,400" fill="#57534e"/>
+
+  <!-- Jagged Fissure Crack Lines -->
+  <path d="M 340 160 L 320 220 L 350 250 L 330 300 L 360 350 L 340 400" stroke="#1c1917" stroke-width="6" fill="none"/>
+  <path d="M 320 220 L 260 240 L 230 290" stroke="#1c1917" stroke-width="4" fill="none"/>
+  <path d="M 350 250 L 420 270 L 460 320" stroke="#1c1917" stroke-width="4" fill="none"/>
+  <path d="M 120 280 L 190 300 L 210 350" stroke="#1c1917" stroke-width="4" fill="none"/>
+
+  <!-- Concrete Rubble Debris Heap on Ground -->
+  <polygon points="60,420 120,360 200,420" fill="#a8a29e"/>
+  <polygon points="180,420 260,340 340,420" fill="#78716c"/>
+  <polygon points="320,420 420,320 500,420" fill="#57534e"/>
+  <polygon points="480,420 560,350 660,420" fill="#a8a29e"/>
+  <polygon points="620,420 700,380 780,420" fill="#78716c"/>
+
+  <!-- Exposed Rebar Wire -->
+  <line x1="330" y1="210" x2="310" y2="180" stroke="#ea580c" stroke-width="3"/>
+  <line x1="335" y1="215" x2="360" y2="190" stroke="#ea580c" stroke-width="3"/>
+
+  <!-- Ground -->
+  <rect x="0" y="410" width="800" height="90" fill="#1c1917"/>
+
+  <!-- LIVE GEOTAG WATERMARK OVERLAY -->
+  <rect x="20" y="405" width="760" height="75" rx="8" fill="rgba(15, 23, 42, 0.9)" stroke="#fbbf24" stroke-width="1.5"/>
+  <circle cx="50" cy="442" r="14" fill="#d97706"/>
+  <text x="50" y="447" fill="#fff" font-family="sans-serif" font-size="12" font-weight="bold" text-anchor="middle">SAR</text>
+  
+  <text x="80" y="432" fill="#fbbf24" font-family="monospace" font-size="15" font-weight="bold">📍 GEOTAG: 15.9010° N, 80.4650° E &bull; ACCURACY: &plusmn;3m</text>
+  <text x="80" y="452" fill="#f1f5f9" font-family="sans-serif" font-size="12">LOCATION: Heritage Market Sector, Old Town Zone, Bapatla</text>
+  <text x="80" y="468" fill="#94a3b8" font-family="sans-serif" font-size="11">TIMESTAMP: 2026-11-06 16:10:07 IST &bull; STRUCTURAL INSTABILITY / SEARCH &amp; RESCUE REQUIRED</text>
+</svg>
+

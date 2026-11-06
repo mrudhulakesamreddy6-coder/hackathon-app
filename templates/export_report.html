@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>After-Action Incident Debrief - {{ incident.incident_code }}</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      color: #111827;
+      background: #fff;
+      padding: 30px;
+      line-height: 1.5;
+    }
+    .header-table {
+      width: 100%;
+      border-bottom: 3px solid #1e3a8a;
+      padding-bottom: 12px;
+      margin-bottom: 20px;
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      font-weight: bold;
+      border-radius: 4px;
+      font-size: 12px;
+      text-transform: uppercase;
+    }
+    .badge-critical { background: #fee2e2; color: #991b1b; }
+    .badge-high { background: #fef3c7; color: #92400e; }
+    .badge-medium { background: #dbeafe; color: #1e40af; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      margin-bottom: 20px;
+    }
+    th, td {
+      border: 1px solid #cbd5e1;
+      padding: 8px 12px;
+      font-size: 13px;
+      text-align: left;
+    }
+    th {
+      background: #f1f5f9;
+      font-weight: bold;
+    }
+    .section-title {
+      font-size: 16px;
+      font-weight: bold;
+      color: #1e3a8a;
+      border-bottom: 1px solid #94a3b8;
+      padding-bottom: 4px;
+      margin-top: 24px;
+      margin-bottom: 10px;
+    }
+    @media print {
+      .no-print { display: none; }
+      body { padding: 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="no-print" style="margin-bottom: 20px; display:flex; justify-content:space-between; align-items:center;">
+    <a href="/incident/{{ incident.id }}" style="text-decoration:none; color:#2563eb; font-weight:bold;">&larr; Back to Command Center</a>
+    <button onclick="window.print()" style="background:#1e3a8a; color:#fff; border:none; padding:8px 18px; border-radius:4px; font-weight:bold; cursor:pointer;">
+      <i class="fa-solid fa-print"></i> Print Official Report (PDF)
+    </button>
+  </div>
+
+  <table class="header-table" style="border:none;">
+    <tr style="border:none;">
+      <td style="border:none; width:70%;">
+        <h1 style="margin:0; font-size:22px; color:#1e3a8a;">DISASTERSYNC AI - EMERGENCY INCIDENT DEBRIEF</h1>
+        <div style="font-size:12px; color:#475569; margin-top:4px;">
+          Multi-Agency Disaster Coordination &bull; Project Code: AG-AI-01 &bull; Bapatla Women's Engineering College
+        </div>
+      </td>
+      <td style="border:none; text-align:right;">
+        <div style="font-size:18px; font-weight:bold; font-family:monospace;">{{ incident.incident_code }}</div>
+        <div style="font-size:12px; color:#64748b;">Generated: {{ current_time }}</div>
+      </td>
+    </tr>
+  </table>
+
+  <div style="background:#f8fafc; border:1px solid #e2e8f0; padding:12px; border-radius:6px; margin-bottom:16px;">
+    <div style="display:flex; justify-content:space-between;">
+      <div><strong>Disaster Type:</strong> {{ incident.emergency_type }}</div>
+      <div><strong>Urgency:</strong> <span class="badge badge-critical">{{ incident.urgency_level }} (Score: {{ incident.urgency_score }}/100)</span></div>
+      <div><strong>Operational Status:</strong> {{ incident.status }}</div>
+      <div><strong>Urgent SOS Beacon:</strong> {{ 'YES' if incident.is_sos else 'NO' }}</div>
+    </div>
+  </div>
+
+  <div class="section-title">1. INCIDENT DETAILS & LOCATION</div>
+  <table>
+    <tr>
+      <th style="width:25%;">Incident Headline</th>
+      <td>{{ incident.title }}</td>
+    </tr>
+    <tr>
+      <th>Reported Location</th>
+      <td>{{ incident.location_address }} {% if incident.landmark %}(Landmark: {{ incident.landmark }}){% endif %}</td>
+    </tr>
+    <tr>
+      <th>GPS Coordinates</th>
+      <td>Latitude: {{ incident.latitude }}, Longitude: {{ incident.longitude }}</td>
+    </tr>
+    <tr>
+      <th>Casualties / Exposure</th>
+      <td>Affected: {{ incident.people_affected }} | Trapped: {{ incident.trapped_count }} | Injured: {{ incident.injured_count }}</td>
+    </tr>
+    <tr>
+      <th>Reporter / Source</th>
+      <td>{{ incident.reporter_name }} ({{ incident.reporter_contact }}) &bull; Source: {{ incident.source }}</td>
+    </tr>
+    <tr>
+      <th>Description</th>
+      <td>{{ incident.description }}</td>
+    </tr>
+    <tr>
+      <th>Urgency Factors</th>
+      <td>{{ incident.urgency_reasons }}</td>
+    </tr>
+    {% if incident.photo_url %}
+    <tr>
+      <th>Verified Live Ground Photo</th>
+      <td>
+        <div style="max-width: 500px; border: 1px solid #94a3b8; border-radius: 4px; overflow: hidden; margin-top: 4px;">
+          <img src="{{ incident.photo_url }}" alt="Verified Live Ground Emergency Photo" style="width: 100%; max-height: 250px; object-fit: cover; display: block;">
+        </div>
+        <div style="font-size: 11px; color: #64748b; margin-top: 4px;">
+          📍 Geotag: {{ incident.latitude }}° N, {{ incident.longitude }}° E &bull; Source: Authenticated On-Scene Live Image Stream
+        </div>
+      </td>
+    </tr>
+    {% endif %}
+  </table>
+
+  <div class="section-title">2. MULTI-AGENT AI COORDINATION FINDINGS</div>
+  <table>
+    <thead>
+      <tr>
+        <th style="width:22%;">Agent</th>
+        <th style="width:15%;">Priority / Conf</th>
+        <th>Synthesis & Recommended Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for rec in recommendations %}
+      <tr>
+        <td><strong>{{ rec.agent_name }}</strong></td>
+        <td>{{ rec.priority_level }} ({{ (rec.confidence * 100)|int }}%)</td>
+        <td>
+          <div style="font-weight:bold; margin-bottom:4px;">{{ rec.recommendation_text }}</div>
+          {% if rec.actions_list %}
+          <ul style="margin:0; padding-left:16px; font-size:12px;">
+            {% for act in rec.actions_list %}
+            <li>{{ act }}</li>
+            {% endfor %}
+          </ul>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="section-title">3. SIMULATED DISPATCHES & RADIO BROADCASTS</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Agency</th>
+        <th>Channel</th>
+        <th>Transmission Text</th>
+        <th>Status</th>
+        <th>Approved By</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for alert in alerts %}
+      <tr>
+        <td><strong>{{ alert.agency_name }}</strong></td>
+        <td style="font-size:11px;">{{ alert.alert_channel }}</td>
+        <td style="font-size:11px; font-family:monospace;">{{ alert.alert_message }}</td>
+        <td><span class="badge badge-medium">{{ alert.status }}</span></td>
+        <td style="font-size:11px;">{{ alert.officer_approved_by or 'Pending Human Approval' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="section-title">4. INCIDENT AUDIT TRAIL</div>
+  <table>
+    <thead>
+      <tr>
+        <th style="width:18%;">Timestamp</th>
+        <th style="width:20%;">Actor</th>
+        <th style="width:20%;">Action</th>
+        <th>Details</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for log in logs %}
+      <tr>
+        <td style="font-size:11px;">{{ log.timestamp }}</td>
+        <td><strong>{{ log.actor_name }}</strong> ({{ log.actor_role }})</td>
+        <td><code>{{ log.action_type }}</code></td>
+        <td style="font-size:11px;">{{ log.details }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="section-title">5. OFFICER EMAIL NOTIFICATIONS DISPATCH LOG</div>
+  <table>
+    <thead>
+      <tr>
+        <th style="width:18%;">Sent Timestamp</th>
+        <th style="width:24%;">Recipient Officer</th>
+        <th style="width:15%;">Notification Type</th>
+        <th>Subject / Details</th>
+        <th style="width:15%;">Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for email in email_logs %}
+      <tr>
+        <td style="font-size:11px;">{{ email.sent_at }}</td>
+        <td style="font-size:11px;"><strong>{{ email.recipient_email }}</strong></td>
+        <td style="font-size:11px;"><code>{{ email.notification_type }}</code></td>
+        <td style="font-size:11px;">
+          <div>{{ email.subject }}</div>
+          {% if email.error_message %}
+          <div style="color:#ef4444; font-size:10px; margin-top:2px;">{{ email.error_message }}</div>
+          {% endif %}
+        </td>
+        <td>
+          {% if email.status == 'SENT' %}
+            <span class="badge" style="background:#16a34a; color:#fff;">SENT</span>
+          {% elif email.status == 'SIMULATED_SENT' %}
+            <span class="badge" style="background:#0284c7; color:#fff;">SIMULATED</span>
+          {% elif email.status == 'DUPLICATE_SKIPPED' %}
+            <span class="badge" style="background:#d97706; color:#fff;">DEDUP</span>
+          {% else %}
+            <span class="badge" style="background:#dc2626; color:#fff;">FAILED</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="5" style="text-align:center; color:#64748b; font-size:11px;">No officer email notifications recorded.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div style="margin-top: 40px; border-top: 1px solid #94a3b8; padding-top: 16px; display:flex; justify-content:space-between;">
+    <div>
+      <div style="font-size:12px; color:#64748b;">Duty Incident Commander Signature:</div>
+      <div style="margin-top:30px; border-bottom:1px solid #000; width:220px;"></div>
+      <div style="font-size:11px; color:#475569; margin-top:4px;">Authorized Emergency Official</div>
+    </div>
+    <div style="text-align:right;">
+      <div style="font-size:12px; color:#64748b;">Coordination Authority:</div>
+      <div style="font-weight:bold; margin-top:10px;">DisasterSync AI Command Hub</div>
+      <div style="font-size:10px; color:#64748b;">Simulated Protocol Evaluation Only</div>
+    </div>
+  </div>
+
+</body>
+</html>
+

@@ -1,0 +1,67 @@
+<div class="card" style="border-top:4px solid {% if incident.urgency_level == 'CRITICAL' %}#ef4444{% elif incident.urgency_level == 'HIGH' %}#f97316{% elif incident.urgency_level == 'MEDIUM' %}#eab308{% else %}#3b82f6{% endif %}; margin-bottom:20px;">
+  <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; margin-bottom:16px; border-bottom:1px solid var(--border-color); padding-bottom:14px;">
+    <div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <h2 style="color:#fff; margin:0; font-family:monospace; font-size:1.4rem;">{{ incident.incident_code }}</h2>
+        <span class="badge" style="background:{% if incident.urgency_level == 'CRITICAL' %}rgba(239,68,68,0.2); color:#ef4444{% elif incident.urgency_level == 'HIGH' %}rgba(249,115,22,0.2); color:#f97316{% else %}rgba(59,130,246,0.2); color:#60a5fa{% endif %};">
+          {{ incident.urgency_level }} PRIORITY
+        </span>
+        {% if incident.is_sos %}<span class="badge badge-sos">SOS TRIGGER</span>{% endif %}
+      </div>
+      <div style="color:#94a3b8; font-size:0.85rem; margin-top:4px;">
+        Reported: {{ incident.reported_at or 'Just now' }} &bull; Type: <strong>{{ incident.emergency_type }}</strong>
+      </div>
+    </div>
+    <div style="text-align:right;">
+      <div style="font-size:0.75rem; color:var(--text-dim); text-transform:uppercase; font-weight:bold;">Current Status</div>
+      <div style="font-size:1.1rem; font-weight:800; color:#34d399;">{{ incident.status }}</div>
+    </div>
+  </div>
+
+  <!-- Incident Details Grid -->
+  <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:12px; margin-bottom:16px; background:rgba(15,23,42,0.6); padding:14px; border-radius:8px;">
+    <div>
+      <div style="font-size:0.75rem; color:var(--text-dim);">LOCATION</div>
+      <div style="color:#fff; font-size:0.9rem; font-weight:600;"><i class="fa-solid fa-location-dot" style="color:#ef4444;"></i> {{ incident.location_address }}</div>
+    </div>
+    <div>
+      <div style="font-size:0.75rem; color:var(--text-dim);">INCIDENT TITLE</div>
+      <div style="color:#fff; font-size:0.9rem; font-weight:600;">{{ incident.title }}</div>
+    </div>
+    <div>
+      <div style="font-size:0.75rem; color:var(--text-dim);">PEOPLE / CASUALTIES</div>
+      <div style="color:#fff; font-size:0.9rem; font-weight:600;">{{ incident.people_affected or 0 }} affected &bull; {{ incident.trapped_count or 0 }} trapped</div>
+    </div>
+  </div>
+
+  {% if incident.photo_url %}
+  <div style="margin-bottom:16px; text-align:center;">
+    <img src="{{ incident.photo_url }}" alt="Geotagged Incident Photo" style="max-height:220px; border-radius:8px; border:1px solid #38bdf8;">
+    <div style="font-size:0.75rem; color:var(--text-dim); margin-top:4px;"><i class="fa-solid fa-camera"></i> Live Geotagged Field Photo</div>
+  </div>
+  {% endif %}
+
+  <!-- Human Safety Notice -->
+  <div style="background:rgba(59,130,246,0.1); border-left:4px solid #3b82f6; padding:12px 14px; border-radius:6px; font-size:0.82rem; color:#bfdbfe; margin-bottom:16px;">
+    <i class="fa-solid fa-circle-info"></i> <strong>Safety Protocol:</strong> Autonomous AI triage complete. Field dispatches require active human authorization by duty commanders. If in immediate life-threatening danger, take safe shelter and follow official directives.
+  </div>
+
+  <!-- Multi-Agency Readiness Alerts -->
+  {% if alerts %}
+  <div style="margin-top:16px;">
+    <h4 style="color:#fff; font-size:0.9rem; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+      <i class="fa-solid fa-shield-halved" style="color:#10b981;"></i> Multi-Agency Response Status
+    </h4>
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:8px;">
+      {% for a in alerts %}
+      <div style="background:rgba(15,23,42,0.8); border:1px solid var(--border-color); border-radius:6px; padding:10px;">
+        <div style="color:#fff; font-size:0.85rem; font-weight:600;">{{ a.agency_name }}</div>
+        <div style="font-size:0.72rem; color:var(--text-dim); margin-top:2px;">Channel: {{ a.alert_channel }}</div>
+        <div style="margin-top:6px;"><span class="badge" style="font-size:0.7rem; background:rgba(59,130,246,0.2); color:#60a5fa;">{{ a.status }}</span></div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+
